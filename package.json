@@ -1,5 +1,5 @@
 {
-  "name": "rxjs-full",
+  "name": "rxjs-stack",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,16 +12,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hansschenker/rxjs-full.git"
+    "url": "git+https://github.com/hansschenker/rxjs-stack.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "bugs": {
-    "url": "https://github.com/hansschenker/rxjs-full/issues"
+    "url": "https://github.com/hansschenker/rxjs-stack/issues"
   },
-  "homepage": "https://github.com/hansschenker/rxjs-full#readme",
+  "homepage": "https://github.com/hansschenker/rxjs-stack#readme",
   "dependencies": {
     "fp-ts": "^2.16.11",
     "io-ts": "^2.2.22",
