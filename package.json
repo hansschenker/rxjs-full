@@ -1,0 +1,39 @@
+{
+  "name": "rxjs-full",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "dev:server": "tsx watch src/server/main.ts",
+    "dev:client": "vite",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hansschenker/rxjs-full.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/hansschenker/rxjs-full/issues"
+  },
+  "homepage": "https://github.com/hansschenker/rxjs-full#readme",
+  "dependencies": {
+    "fp-ts": "^2.16.11",
+    "io-ts": "^2.2.22",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.7.0",
+    "@vitest/coverage-v8": "^4.1.6",
+    "jsdom": "^29.1.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.12",
+    "vitest": "^4.1.6"
+  }
+}
