@@ -5,6 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![RxJS](https://img.shields.io/badge/RxJS-7-pink?logo=reactivex)](https://rxjs.dev)
 [![Vitest](https://img.shields.io/badge/tested%20with-Vitest-6E9F18?logo=vitest)](https://vitest.dev)
+[![Vite](https://img.shields.io/badge/bundled%20with-Vite-646CFF?logo=vite)](https://vite.dev)
 
 A full-stack TypeScript application built entirely with RxJS — no framework on the server, no framework on the client. Everything is Observables, operators, and pure functions.
 
