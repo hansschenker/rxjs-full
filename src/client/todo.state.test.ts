@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { firstValueFrom } from 'rxjs';
 import { skip } from 'rxjs/operators';
-import { reducer, initialState, state$, dispatch } from './todo.state';
+import { reducer, state$, dispatch } from './todo.state';
 import type { State } from './todo.state';
 import type { Todo } from '../shared/types';
 
