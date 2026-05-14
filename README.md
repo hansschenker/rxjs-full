@@ -170,7 +170,7 @@ rxjs-stack keeps the ideas and drops the dependency. The result is ~400 lines of
 
 ## Contributors
 
-- **Hans Schenker** — architecture direction, design decisions, requirements
-- **Claude (Anthropic)** — primary implementation contributor; wrote the server core, client MVU layer, TSX factory, all 78 tests, and this README in a single pair-programming session
+- **[Hans Schenker](https://github.com/hansschenker)** — architecture direction, design decisions, requirements
+- **[Claude (Anthropic)](https://claude.ai)** — primary implementation contributor; wrote the server core, client MVU layer, TSX factory, all 78 tests, and this README in a single pair-programming session
 
 > This project is an example of what agentic AI-assisted development looks like in practice: the human steers, the AI executes — minimal back-and-forth, maximum output.
