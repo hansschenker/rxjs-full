@@ -9,6 +9,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=nodedotjs)](https://nodejs.org)
 [![io-ts](https://img.shields.io/badge/validation-io--ts-orange)](https://github.com/gcanti/io-ts)
 [![Security Policy](https://img.shields.io/badge/security-policy-green?logo=github)](https://github.com/hansschenker/rxjs-stack/blob/main/SECURITY.md)
+[![Built with Claude Code](https://img.shields.io/badge/built%20with-Claude%20Code-blueviolet?logo=anthropic)](https://claude.ai/code)
 
 A full-stack TypeScript application built entirely with RxJS — no framework on the server, no framework on the client. Everything is Observables, operators, and pure functions.
 
