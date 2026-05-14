@@ -1,0 +1,53 @@
+name: Claude Weekly Maintenance
+
+# Runs every Monday at 09:00 UTC. Can also be triggered manually.
+# Checks for stale issues/PRs, outdated dependencies, and TODO comments.
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: 'true'
+          prompt: |
+            REPO: ${{ github.repository }}
+
+            Perform weekly repository maintenance. Collect all findings and create
+            a single summary issue at the end — do not create one issue per finding.
+
+            Checks to run:
+            1. Stale issues: find open issues with no activity in 30+ days.
+               Add label `stale` and post a comment asking if still relevant.
+               Use: `gh issue list --state open --repo ${{ github.repository }}`
+
+            2. Stale PRs: find open PRs with no activity in 14+ days.
+               Post a comment asking for status update.
+               Use: `gh pr list --state open --repo ${{ github.repository }}`
+
+            3. Dependency health (if package.json exists):
+               Run `npm outdated --json` and note any major-version outdated packages.
+
+            4. TODO/FIXME scan: search source files for TODO, FIXME, HACK comments.
+               Use: `grep -rn "TODO\|FIXME\|HACK" --include="*.ts" --include="*.js" --include="*.tsx" .`
+               Only flag items not already tracked as issues.
+
+            5. Summary: create a GitHub issue titled "Weekly Maintenance Report — $(date +%Y-%m-%d)"
+               with a markdown summary of all findings, grouped by category.
+               If everything is clean, still create the issue to confirm the check ran.
+          claude_args: |
+            --allowedTools "Read,Bash(gh issue:*),Bash(gh pr:*),Bash(gh label:*),Bash(npm outdated:*),Bash(grep:*),Bash(date:*)"

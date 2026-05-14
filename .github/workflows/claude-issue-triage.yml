@@ -1,0 +1,42 @@
+name: Claude Issue Triage
+
+# Automatically triages new issues: classifies, sets priority labels,
+# and adds claude:implement if the issue is well-defined enough for automation.
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            ISSUE NUMBER: ${{ github.event.issue.number }}
+            TITLE: ${{ github.event.issue.title }}
+            BODY: ${{ github.event.issue.body }}
+            AUTHOR: ${{ github.event.issue.user.login }}
+
+            Triage this new issue:
+
+            1. Classify it as one of: bug, feature, question, documentation, maintenance
+            2. Assign a priority: priority:critical, priority:high, priority:medium, priority:low
+            3. Apply labels with: `gh issue edit ${{ github.event.issue.number }} --add-label "label1,label2" --repo ${{ github.repository }}`
+               Create any missing labels first with: `gh label create "label" --color "HEXCOLOR" --repo ${{ github.repository }}`
+            4. If the issue is a well-defined bug or feature that Claude can implement autonomously,
+               also add the label `claude:implement` — this will trigger the implementation workflow.
+            5. Post a brief comment acknowledging the issue and describing the triage outcome.
+
+            Label colours to use when creating: bug=#d73a4a, feature=#a2eeef, question=#d876e3,
+            documentation=#0075ca, maintenance=#e4e669, priority:critical=#b60205,
+            priority:high=#d93f0b, priority:medium=#fbca04, priority:low=#0e8a16, claude:implement=#5319e7
+          claude_args: |
+            --allowedTools "Bash(gh issue:*),Bash(gh label:*)"

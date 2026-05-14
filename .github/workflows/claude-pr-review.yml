@@ -1,0 +1,46 @@
+name: Claude PR Review
+
+# Automatically reviews every non-draft PR when opened or updated.
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: 'true'
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            PR TITLE: ${{ github.event.pull_request.title }}
+            AUTHOR: ${{ github.event.pull_request.user.login }}
+
+            Review this pull request. Focus on:
+            - Code quality and adherence to existing project conventions
+            - Potential bugs, edge cases, or regressions
+            - Security implications (injection, auth, data exposure)
+            - Performance considerations
+            - Test coverage for the changed code
+
+            Steps:
+            1. Run `gh pr diff ${{ github.event.pull_request.number }}` to see the changes
+            2. Read relevant source files for context
+            3. Post a top-level summary comment with `gh pr comment ${{ github.event.pull_request.number }} --body "..."`
+            4. Use inline comments for line-specific feedback
+
+            Be direct and constructive. Flag blockers clearly, note suggestions separately.
+          claude_args: |
+            --allowedTools "Read,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),mcp__github_inline_comment__create_inline_comment"
