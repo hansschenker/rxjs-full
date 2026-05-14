@@ -1,5 +1,7 @@
 # rxjs-stack
 
+[![CI](https://github.com/hansschenker/rxjs-stack/actions/workflows/ci.yml/badge.svg)](https://github.com/hansschenker/rxjs-stack/actions/workflows/ci.yml)
+
 A full-stack TypeScript application built entirely with RxJS — no framework on the server, no framework on the client. Everything is Observables, operators, and pure functions.
 
 This project distils five patterns from [Marble.js](https://docs.marblejs.com/) and reimplements them in plain RxJS, making the ideas available without the framework dependency.
