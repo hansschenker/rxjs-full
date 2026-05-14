@@ -169,6 +169,32 @@ rxjs-stack keeps the ideas and drops the dependency. The result is ~400 lines of
 
 ---
 
+## How this was built — agentic workflow
+
+This project was built in a single pair-programming session between a human architect and [Claude Code](https://claude.ai/code) (Anthropic's AI coding agent).
+
+**The workflow:**
+
+1. **Human steers** — architecture direction, naming decisions, scope, requirements
+2. **Claude executes** — implementation, tests, fixes, GitHub setup, documentation
+3. **Human verifies** — runs the app, confirms it works end-to-end, approves each step
+
+Claude asked only a handful of questions during the entire session — naming (`rxjs-stack` vs `rxjs-full`), which license to use, and a couple of architectural choices. Everything else was derived from context and executed without interruption.
+
+**What Claude built autonomously:**
+- All 5 server core modules (~400 lines)
+- Todos CRUD API with io-ts validation
+- Custom TSX factory, MVU state layer, service layer, TodoItem component
+- 78 tests across 8 files (server + client)
+- README, CHANGELOG, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, issue/PR templates
+- GitHub Actions CI, Dependabot config, all repo settings, badges, release
+
+**Why this matters:**
+
+Agentic development changes what a single developer can ship in an afternoon. The human's job shifts from writing code to making decisions — architecture, scope, trade-offs. The AI handles the implementation detail. The result is a fully tested, documented, and published open source project built faster than most developers could scaffold the boilerplate alone.
+
+---
+
 ## Contributors
 
 <table>
