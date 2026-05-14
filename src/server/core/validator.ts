@@ -2,7 +2,7 @@
 // Unlike Marble.js, the body type propagates correctly — no casts downstream.
 
 import * as t from 'io-ts';
-import { isRight } from 'fp-ts/Either';
+import { isRight } from 'fp-ts/lib/Either';
 import { mergeMap, of, throwError } from 'rxjs';
 import type { OperatorFunction } from 'rxjs';
 import type { HttpRequest } from './types';
