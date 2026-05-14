@@ -1,6 +1,7 @@
 # rxjs-stack
 
 [![CI](https://github.com/hansschenker/rxjs-stack/actions/workflows/ci.yml/badge.svg)](https://github.com/hansschenker/rxjs-stack/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/hansschenker/rxjs-stack/blob/main/LICENSE)
 
 A full-stack TypeScript application built entirely with RxJS — no framework on the server, no framework on the client. Everything is Observables, operators, and pure functions.
 
