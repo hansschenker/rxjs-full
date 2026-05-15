@@ -4,6 +4,27 @@ All notable changes to rxjs-stack are documented here.
 
 ---
 
+## [Unreleased]
+
+### Added
+
+**Application framework layer (v0.2)**
+- `createApp()` — injectable services, per-app context, lifecycle hooks, `/health` + `/ready`
+- Route helpers: `get()`, `post()`, `put()`, `del()`, `group()`, `handle()`
+- `cors()` — CORS middleware with preflight support, origin allowlist, and credentials option
+- `requestId()` middleware
+- `HttpError` class hierarchy (`BadRequest`, `Unauthorized`, `Forbidden`, `NotFound`, `UnprocessableEntity`)
+- Response helpers: `json()`, `created()`, `noContent()`, `redirect()`, `withHeader()`, `withCookie()`
+- Zod validators: `validateBody()`, `validateParams()`, `validateQuery()`
+- Testing helpers: `runEffect()`, `runRequest()`, `createHttpTestClient()`, `createTestContext()`, `createTestRequest()`
+- Shared route contracts (`src/shared/routes.ts`) — `RouteContract`, `RouteParams`, `RouteBody`, `RouteQuery`, `RouteResponse`, `buildPath`, `apiPath`
+- `createClient(routes)` — derives a typed Observable client tree directly from the shared route contract map
+
+### Fixed
+- `defineRoute` now correctly propagates query-parameter presence at runtime, enabling `createClient` to build query strings from the contract
+
+---
+
 ## [1.0.0] — 2026-05-14
 
 ### Added
