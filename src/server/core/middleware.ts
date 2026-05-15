@@ -1,4 +1,5 @@
-import { map, mergeMap, of, tap } from 'rxjs';
+import { catchError, from, map, mergeMap, of, tap } from 'rxjs';
+import { Unauthorized, errorResponse } from './errors';
 import type { Effect, Middleware } from './types';
 
 export const logger = (): Middleware =>
@@ -59,6 +60,47 @@ export const cors = (options: CorsOptions = {}): (effect: Effect) => Effect => {
 							...res,
 							headers: { ...baseHeaders, ...(res.headers ?? {}) },
 						})),
+					);
+				}),
+			);
+};
+
+export interface AuthOptions {
+	exclude?: string[];
+}
+
+export const requireAuth = <TClaims>(
+	verify: (token: string) => TClaims | Promise<TClaims>,
+	options: AuthOptions = {},
+): (effect: Effect) => Effect => {
+	const exclude = options.exclude ?? ['/health', '/ready'];
+
+	return (effect: Effect): Effect =>
+		req$ =>
+			req$.pipe(
+				mergeMap(req => {
+					if (exclude.includes(req.url)) {
+						return effect(of(req));
+					}
+
+					const authHeader = req.headers['authorization'];
+					if (!authHeader?.startsWith('Bearer ')) {
+						return of(errorResponse(new Unauthorized()));
+					}
+
+					const token = authHeader.slice(7);
+					return from((async () => verify(token))()).pipe(
+						mergeMap(claims => {
+							const enriched = {
+								...req,
+								requestContext: {
+									...req.requestContext,
+									state: { ...req.requestContext.state, user: claims },
+								},
+							};
+							return effect(of(enriched));
+						}),
+						catchError(() => of(errorResponse(new Unauthorized()))),
 					);
 				}),
 			);
