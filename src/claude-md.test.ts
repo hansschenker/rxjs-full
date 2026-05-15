@@ -2,6 +2,7 @@
 // If these tests break, the documentation is out of date.
 
 import { firstValueFrom, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { expectTypeOf, vi } from 'vitest';
 
 vi.mock('rxjs/fetch', () => ({ fromFetch: vi.fn() }));
@@ -10,10 +11,13 @@ import { fromFetch } from 'rxjs/fetch';
 import { apiPath, routes, type RouteParams, type RouteBody, type RouteResponse } from './shared/routes';
 import type { Todo, CreateTodoBody, UpdateTodoBody } from './shared/types';
 import { createClient } from './client/api';
+import { createApp } from './server/core/app';
+import { cors } from './server/core/middleware';
+import { json } from './server/core/response';
 import { createTestContext, createTestRequest, runRequest } from './server/core/testing';
 import { createTodoEffects } from './server/todos/todo.effect';
 import { createTodoStore } from './server/todos/todo.store';
-import { handle } from './server/core/router';
+import { get, handle } from './server/core/router';
 
 // ---------------------------------------------------------------------------
 // Shared route contracts
@@ -179,5 +183,65 @@ describe('CLAUDE.md — testing patterns', () => {
 		);
 
 		expect(res.status).toBe(404);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// cors() via createApp + app.router — CLAUDE.md "Server layers" section
+// ---------------------------------------------------------------------------
+
+describe('CLAUDE.md — cors() via createApp and app.router', () => {
+	const testRoutes = [
+		get('/todos', req$ => req$.pipe(map(() => json([])))),
+	];
+
+	it('app.router is an Effect callable without starting an HTTP server', async () => {
+		const app = createApp(testRoutes);
+		const res = await firstValueFrom(app.router(of(createTestRequest({ url: '/todos' }))));
+		expect(res.status).toBe(200);
+	});
+
+	it('cors() default — OPTIONS returns 204 with wildcard Allow-Origin and method list', async () => {
+		const app = createApp(testRoutes, { cors: cors() });
+		const res = await firstValueFrom(
+			app.router(of(createTestRequest({ method: 'OPTIONS', url: '/todos', headers: {} }))),
+		);
+		expect(res.status).toBe(204);
+		expect(res.headers?.['Access-Control-Allow-Origin']).toBe('*');
+		expect(res.headers?.['Access-Control-Allow-Methods']).toContain('GET');
+	});
+
+	it('cors() default — non-OPTIONS response receives Access-Control-Allow-Origin: *', async () => {
+		const app = createApp(testRoutes, { cors: cors() });
+		const res = await firstValueFrom(
+			app.router(of(createTestRequest({ url: '/todos', headers: {} }))),
+		);
+		expect(res.headers?.['Access-Control-Allow-Origin']).toBe('*');
+	});
+
+	it('cors({ origins }) — echoes a matching origin instead of wildcard', async () => {
+		const app = createApp(testRoutes, { cors: cors({ origins: ['http://localhost:5173'] }) });
+		const res = await firstValueFrom(
+			app.router(of(createTestRequest({ url: '/todos', headers: { origin: 'http://localhost:5173' } }))),
+		);
+		expect(res.headers?.['Access-Control-Allow-Origin']).toBe('http://localhost:5173');
+	});
+
+	it('cors({ origins }) — omits header for a non-matching origin', async () => {
+		const app = createApp(testRoutes, { cors: cors({ origins: ['http://localhost:5173'] }) });
+		const res = await firstValueFrom(
+			app.router(of(createTestRequest({ url: '/todos', headers: { origin: 'http://evil.com' } }))),
+		);
+		expect(res.headers?.['Access-Control-Allow-Origin']).toBeUndefined();
+	});
+
+	it('cors({ origins, credentials: true }) — adds Access-Control-Allow-Credentials header', async () => {
+		const app = createApp(testRoutes, {
+			cors: cors({ origins: ['http://localhost:5173'], credentials: true }),
+		});
+		const res = await firstValueFrom(
+			app.router(of(createTestRequest({ url: '/todos', headers: { origin: 'http://localhost:5173' } }))),
+		);
+		expect(res.headers?.['Access-Control-Allow-Credentials']).toBe('true');
 	});
 });
