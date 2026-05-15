@@ -67,6 +67,33 @@ const res = await firstValueFrom(app.router(of(createTestRequest({ method: 'OPTI
 expect(res.status).toBe(204);
 ```
 
+`requireAuth(verify, options?)` protects the app with a bring-your-own verifier. It reads `Authorization: Bearer <token>`, calls `verify`, and stores the result at `req.requestContext.state.user`. Returns 401 directly on missing/invalid tokens. `/health` and `/ready` are excluded by default:
+
+```typescript
+createApp(routes, {
+	cors: cors(),
+	auth: requireAuth(
+		async token => {
+			// decode / validate however you like — throw to reject
+			const payload = await myJwtVerify(token);
+			return payload;                    // stored as req.requestContext.state.user
+		},
+		{ exclude: ['/login'] },
+	),
+});
+```
+
+Access claims inside a route effect:
+
+```typescript
+get('/profile', req$ => req$.pipe(
+	map(req => {
+		const user = req.requestContext.state.user as { id: string };
+		return json({ id: user.id });
+	}),
+))
+```
+
 ### Shared route contracts (`src/shared/routes.ts`)
 
 The single source of truth for every endpoint. One `RouteContract` declaration covers method, path template, body type, query type, and response type.

@@ -12,7 +12,7 @@ import { apiPath, routes, type RouteParams, type RouteBody, type RouteResponse }
 import type { Todo, CreateTodoBody, UpdateTodoBody } from './shared/types';
 import { createClient } from './client/api';
 import { createApp } from './server/core/app';
-import { cors } from './server/core/middleware';
+import { cors, requireAuth } from './server/core/middleware';
 import { json } from './server/core/response';
 import { createTestContext, createTestRequest, runRequest } from './server/core/testing';
 import { createTodoEffects } from './server/todos/todo.effect';
@@ -243,5 +243,60 @@ describe('CLAUDE.md — cors() via createApp and app.router', () => {
 			app.router(of(createTestRequest({ url: '/todos', headers: { origin: 'http://localhost:5173' } }))),
 		);
 		expect(res.headers?.['Access-Control-Allow-Credentials']).toBe('true');
+	});
+});
+
+// ---------------------------------------------------------------------------
+// requireAuth() via createApp — CLAUDE.md "Server layers" section
+// ---------------------------------------------------------------------------
+
+describe('CLAUDE.md — requireAuth() via createApp', () => {
+	const testRoutes = [
+		get('/profile', req$ => req$.pipe(map(() => json({ id: '42' })))),
+	];
+
+	it('valid token — claims are stored in requestContext.state.user', async () => {
+		const claims = { id: '99', role: 'admin' };
+		let captured: unknown;
+		const captureRoutes = [
+			get('/profile', req$ => req$.pipe(
+				map(req => {
+					captured = req.requestContext.state.user;
+					return json({ id: '42' });
+				}),
+			)),
+		];
+		const app = createApp(captureRoutes, {
+			auth: requireAuth(async () => claims),
+		});
+		await firstValueFrom(
+			app.router(of(createTestRequest({
+				url: '/profile',
+				headers: { authorization: 'Bearer my-token' },
+			}))),
+		);
+		expect(captured).toEqual(claims);
+	});
+
+	it('missing token returns 401', async () => {
+		const app = createApp(testRoutes, {
+			auth: requireAuth(async () => ({ id: '1' })),
+		});
+		const res = await firstValueFrom(
+			app.router(of(createTestRequest({ url: '/profile', headers: {} }))),
+		);
+		expect(res.status).toBe(401);
+	});
+
+	it('excluded path bypasses auth entirely', async () => {
+		const app = createApp(testRoutes, {
+			auth: requireAuth(async () => { throw new Error('should not be called'); }, {
+				exclude: ['/profile'],
+			}),
+		});
+		const res = await firstValueFrom(
+			app.router(of(createTestRequest({ url: '/profile', headers: {} }))),
+		);
+		expect(res.status).toBe(200);
 	});
 });
