@@ -13,6 +13,7 @@ const app = createApp([
 		handle(routes.todos.create, todoEffects.create$),
 		handle(routes.todos.update, todoEffects.update$),
 		handle(routes.todos.remove, todoEffects.delete$),
+		handle(routes.todos.stream, todoEffects.todoStream$),
 	]),
 ], {
 	services: {

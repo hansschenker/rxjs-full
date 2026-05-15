@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 import { NotFound } from '../core/errors';
-import { created, json, noContent } from '../core/response';
+import { created, json, noContent, stream$ } from '../core/response';
 import type { Effect } from '../core/types';
 import { validateBody, validateParams, validateQuery } from '../core/validator';
 import { CreateTodoSchema, TodoListQuerySchema, TodoParamsSchema, UpdateTodoSchema } from './todo.validator';
@@ -70,6 +70,14 @@ export const createTodoEffects = () => ({
 				return noContent();
 			}),
 		)) as Effect,
+
+	todoStream$: ((req$) =>
+		req$.pipe(
+			map(req => {
+				const store = getTodoStore(req);
+				return stream$(store.todos$, 'todos');
+			}),
+		)) as Effect,
 });
 
 const defaultEffects = createTodoEffects();
@@ -77,6 +85,7 @@ export const getAll$ = defaultEffects.getAll$;
 export const create$ = defaultEffects.create$;
 export const update$ = defaultEffects.update$;
 export const delete$ = defaultEffects.delete$;
+export const todoStream$ = defaultEffects.todoStream$;
 
 const getTodoStore = (req: { context: { services: Record<string, unknown> } }): TodoStore =>
 	req.context.services.todoStore as TodoStore;

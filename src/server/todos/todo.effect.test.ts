@@ -1,8 +1,8 @@
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, of, skip } from 'rxjs';
 import type { HttpRequest } from '../core/types';
 import { ValidationError } from '../core/validator';
-import { resetStore, setTodos, getTodos, todoStore } from './todo.store';
-import { getAll$, create$, update$, delete$ } from './todo.effect';
+import { createTodoStore, resetStore, setTodos, getTodos, todoStore } from './todo.store';
+import { getAll$, create$, update$, delete$, todoStream$ } from './todo.effect';
 import type * as http from 'http';
 
 const mockReq = (overrides: Partial<HttpRequest> = {}): HttpRequest => ({
@@ -160,5 +160,28 @@ describe('delete$', () => {
 		await expect(firstValueFrom(delete$(of(mockReq({ params: { id: 'nonexistent' } })))))
 			.rejects.toMatchObject({ status: 404, message: 'Todo not found' });
 		expect(getTodos().length).toBe(before);
+	});
+});
+
+describe('todoStream$', () => {
+	it('returns an HttpResponse with stream set and SSE Content-Type header', async () => {
+		const store = createTodoStore();
+		const res = await firstValueFrom(
+			todoStream$(of(mockReq({ context: { services: { todoStore: store }, state: {} } }))),
+		);
+		expect(res.stream).toBeDefined();
+		expect(res.headers?.['Content-Type']).toBe('text/event-stream');
+	});
+
+	it('stream emits a todos event for each store update', async () => {
+		const store = createTodoStore();
+		const res = await firstValueFrom(
+			todoStream$(of(mockReq({ context: { services: { todoStore: store }, state: {} } }))),
+		);
+		const eventPromise = firstValueFrom(res.stream!.pipe(skip(1)));
+		store.setTodos([{ id: '99', title: 'New', completed: false, createdAt: '2026-01-01T00:00:00.000Z' }]);
+		const event = await eventPromise;
+		expect(event.event).toBe('todos');
+		expect(Array.isArray(event.data)).toBe(true);
 	});
 });

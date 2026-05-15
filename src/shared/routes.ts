@@ -58,6 +58,7 @@ export const routes = {
 		create: defineRoute<'POST', '/todos', CreateTodoBody, undefined, Todo>('POST', '/todos'),
 		update: defineRoute<'PUT', '/todos/:id', UpdateTodoBody, undefined, Todo>('PUT', '/todos/:id'),
 		remove: defineRoute<'DELETE', '/todos/:id', undefined, undefined, void>('DELETE', '/todos/:id'),
+		stream: defineRoute('GET', '/todos/stream'),
 	},
 } as const;
 
