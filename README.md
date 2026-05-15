@@ -36,7 +36,10 @@ type Middleware = OperatorFunction<HttpRequest, HttpRequest>;
 Middleware is just an RxJS operator. Compose it with `pipe()`, exactly like any other operator.
 
 ```typescript
-bootstrap(3000, router, logger(), cors());
+const app = createApp(routes, {
+    middlewares: [requestId(), logger()],
+    cors: cors({ origins: ['*'] }),
+});
 ```
 
 ### 3. Observable HTTP server
@@ -70,13 +73,14 @@ The router is itself an Effect. It matches by method and path, extracts params, 
 ```
 src/
 ├── shared/
-│   └── types.ts          # Todo, CreateTodoBody, UpdateTodoBody — shared between client and server
+│   ├── types.ts          # Todo, CreateTodoBody, UpdateTodoBody — shared between client and server
+│   └── routes.ts         # RouteContract definitions, RouteParams/RouteBody/RouteResponse utilities, apiPath
 │
 ├── server/
 │   ├── core/
 │   │   ├── types.ts      # Effect, Middleware, HttpRequest, HttpResponse
 │   │   ├── http.ts       # createServer — Node HTTP as Observable
-│   │   ├── middleware.ts  # logger() middleware
+│   │   ├── middleware.ts  # logger(), requestId(), cors() middleware
 │   │   ├── app.ts        # createApp() — context, lifecycle hooks, health routes
 │   │   ├── errors.ts     # HttpError hierarchy + centralized mapping
 │   │   ├── response.ts   # json(), created(), noContent(), redirect(), cookies
@@ -93,7 +97,8 @@ src/
 └── client/
     ├── h.ts                      # custom TSX factory (no React)
     ├── todo.state.ts             # MVU state: Subject + scan + shareReplay
-    ├── todo.service.ts           # fromFetch wrappers for the API
+    ├── todo.service.ts           # typed client wrappers via createClient
+    ├── api.ts                    # createClient — typed Observable client from route contracts
     ├── components/
     │   └── todo-item.tsx         # TodoItem component
     └── main.tsx                  # app entry: fromEvent + exhaustMap form handler
@@ -160,7 +165,7 @@ npm run dev:client
 Open the URL Vite prints (typically `http://localhost:5173`).
 
 ```bash
-npm test          # run all 78 tests
+npm test          # run all tests
 npm run typecheck # TypeScript strict check
 ```
 
@@ -193,7 +198,7 @@ The client `createClient(routes)` helper now derives a typed client tree directl
 ```typescript
 const api = createClient(routes);
 
-api.todos.list();                         // Observable<Todo[]>
+api.todos.list({});                       // Observable<Todo[]>
 api.todos.create({ title: 'Ship it' });   // Observable<Todo>
 api.todos.update({ id: '42' }, { completed: true });
 ```
