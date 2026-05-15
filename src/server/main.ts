@@ -9,11 +9,11 @@ const todoEffects = createTodoEffects();
 
 const app = createApp([
 	group('', [
-		handle(routes.todos.list, todoEffects.getAll$),
+		handle(routes.todos.list,   todoEffects.getAll$),
+		handle(routes.todos.stream, todoEffects.todoStream$),
 		handle(routes.todos.create, todoEffects.create$),
 		handle(routes.todos.update, todoEffects.update$),
 		handle(routes.todos.remove, todoEffects.delete$),
-		handle(routes.todos.stream, todoEffects.todoStream$),
 	]),
 ], {
 	services: {
