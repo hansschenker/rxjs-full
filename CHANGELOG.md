@@ -6,6 +6,24 @@ All notable changes to rxjs-stack are documented here.
 
 ## [Unreleased]
 
+---
+
+## [0.3.0] — 2026-05-15
+
+### Added
+
+**Auth middleware (v0.3)**
+- `requireAuth<TClaims>(verify, options?)` — app-wide Bearer token auth Effect wrapper with bring-your-own verifier
+- `AuthOptions.exclude` — path list that bypasses auth; defaults to `['/health', '/ready']`; query strings stripped before matching
+- `AppOptions.auth?` in `createApp` — wires `requireAuth` inside `cors` so OPTIONS preflight is never blocked by auth
+- Claims stored at `req.requestContext.state.user` as `TClaims` — accessible in any downstream route effect
+- 15 new tests: `requireAuth()` unit suite (8), `createApp` auth integration (4), living-doc tests in `claude-md.test.ts` (3)
+- Test suite grows from 144 (v0.2) to 159 tests across 17 files
+
+---
+
+## [0.2.0] — 2026-05-14
+
 ### Added
 
 **Application framework layer (v0.2)**
