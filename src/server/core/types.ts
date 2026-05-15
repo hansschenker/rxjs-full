@@ -27,10 +27,17 @@ export interface HttpRequest<
 	requestContext: RequestContext;
 }
 
+export interface SseEvent {
+	event?: string;
+	data: unknown;
+	id?: string;
+}
+
 export interface HttpResponse {
 	status?: number;
 	body?: unknown;
 	headers?: Record<string, string>;
+	stream?: Observable<SseEvent>;
 }
 
 export type Effect<TRequest extends HttpRequest = HttpRequest> = (req$: Observable<TRequest>) => Observable<HttpResponse>;
