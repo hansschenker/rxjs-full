@@ -1,5 +1,7 @@
 import { firstValueFrom, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { createApp } from './app';
+import { cors } from './middleware';
 import { createRouter, get, group } from './router';
 import { json } from './response';
 import { createTestRequest } from './testing';
@@ -56,4 +58,29 @@ describe('route groups', () => {
 	});
 });
 
-import { map } from 'rxjs/operators';
+describe('createApp() — cors option', () => {
+	it('applies the cors wrapper so OPTIONS requests receive preflight headers', async () => {
+		const app = createApp([
+			get('/test', req$ => req$.pipe(map(() => json('ok')))),
+		], { cors: cors() });
+
+		const res = await firstValueFrom(app.router(of(createTestRequest({
+			method: 'OPTIONS',
+			url: '/test',
+			headers: {},
+		}))));
+
+		expect(res.status).toBe(204);
+		expect(res.headers?.['Access-Control-Allow-Origin']).toBe('*');
+	});
+
+	it('leaves the router unwrapped when no cors option is given', async () => {
+		const app = createApp([
+			get('/test', req$ => req$.pipe(map(() => json('ok')))),
+		]);
+
+		const res = await firstValueFrom(app.router(of(createTestRequest({ url: '/test' }))));
+		expect(res.status).toBe(200);
+		expect(res.headers?.['Access-Control-Allow-Origin']).toBeUndefined();
+	});
+});
