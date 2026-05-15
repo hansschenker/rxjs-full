@@ -44,6 +44,13 @@ describe('fromEventSource()', () => {
 		expect(mockEs.close).toHaveBeenCalledOnce();
 	});
 
+	it('closes the EventSource when the observable errors', () => {
+		fromEventSource('/api/todos/stream', 'todos').subscribe({ error: () => {} });
+		mockEs.close.mockClear();
+		mockEs.triggerError();
+		expect(mockEs.close).toHaveBeenCalledOnce();
+	});
+
 	it('errors the Observable when EventSource fires onerror', () => {
 		let capturedError: Error | undefined;
 		fromEventSource('/api/todos/stream', 'todos').subscribe({
