@@ -229,7 +229,7 @@ Claude asked only a handful of questions during the entire session — naming (`
 - All 5 server core modules (~400 lines)
 - Todos CRUD API with Zod validation
 - Custom TSX factory, MVU state layer, service layer, TodoItem component
-- 78 tests across 8 files (server + client)
+- 78 tests across 8 files (server + client) at v1.0.0 — now 138 tests across 17 files after v0.2
 - README, CHANGELOG, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, issue/PR templates
 - GitHub Actions CI, Dependabot config, all repo settings, badges, release
 
@@ -255,7 +255,7 @@ Agentic development changes what a single developer can ship in an afternoon. Th
         <img src="https://github.com/anthropics.png" width="80" alt="Claude (Anthropic)" /><br />
         <b>Claude (Anthropic)</b>
       </a><br />
-      Primary implementation contributor; server core, client MVU layer, TSX factory, all 78 tests, and this README
+      Primary implementation contributor; server core, client MVU layer, TSX factory, tests, and this README
     </td>
   </tr>
 </table>
