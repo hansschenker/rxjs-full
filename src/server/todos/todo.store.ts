@@ -1,12 +1,29 @@
 import { BehaviorSubject } from 'rxjs';
 import type { Todo } from '../../shared/types';
 
-const seed: Todo[] = [
-	{ id: '1', title: 'Learn rxjs-full', completed: false, createdAt: new Date().toISOString() },
+export interface TodoStore {
+	getTodos: () => Todo[];
+	setTodos: (todos: Todo[]) => void;
+	reset: () => void;
+}
+
+const createSeed = (): Todo[] => [
+	{ id: '1', title: 'Learn rxjs-stack', completed: false, createdAt: new Date().toISOString() },
 ];
 
-const store$ = new BehaviorSubject<Todo[]>([...seed]);
+export const createTodoStore = (): TodoStore => {
+	const seed = createSeed();
+	const store$ = new BehaviorSubject<Todo[]>([...seed]);
 
-export const getTodos = (): Todo[] => [...store$.getValue()];
-export const setTodos = (todos: Todo[]): void => store$.next(todos);
-export const resetStore = (): void => store$.next([...seed]);
+	return {
+		getTodos: () => [...store$.getValue()],
+		setTodos: todos => store$.next(todos),
+		reset: () => store$.next([...seed]),
+	};
+};
+
+const defaultStore = createTodoStore();
+export const todoStore = defaultStore;
+export const getTodos = defaultStore.getTodos;
+export const setTodos = defaultStore.setTodos;
+export const resetStore = defaultStore.reset;

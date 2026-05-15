@@ -1,10 +1,9 @@
 import { createServer as createNetServer } from 'node:net';
 import type { AddressInfo } from 'node:net';
-import type { Subscription } from 'rxjs';
-import { bootstrap } from './core/bootstrap';
-import { createRouter } from './core/router';
-import { resetStore } from './todos/todo.store';
-import { getAll$, create$, update$, delete$ } from './todos/todo.effect';
+import { createApp } from './core/app';
+import { del, get, group, post, put } from './core/router';
+import { createTodoStore } from './todos/todo.store';
+import { createTodoEffects } from './todos/todo.effect';
 
 const getAvailablePort = (): Promise<number> =>
 	new Promise(resolve => {
@@ -17,21 +16,26 @@ const getAvailablePort = (): Promise<number> =>
 
 describe('HTTP integration', () => {
 	let port: number;
-	let subscription: Subscription;
+	let app: ReturnType<typeof createApp<{ todoStore: ReturnType<typeof createTodoStore> }>>;
+	let store: ReturnType<typeof createTodoStore>;
 
 	beforeAll(async () => {
 		port = await getAvailablePort();
-		const router = createRouter([
-			{ method: 'GET',    path: '/todos',     effect: getAll$ },
-			{ method: 'POST',   path: '/todos',     effect: create$ },
-			{ method: 'PUT',    path: '/todos/:id', effect: update$ },
-			{ method: 'DELETE', path: '/todos/:id', effect: delete$ },
-		]);
-		subscription = bootstrap(port, router);
+		store = createTodoStore();
+		const effects = createTodoEffects();
+		app = createApp([
+			group('/todos', [
+				get('/', effects.getAll$),
+				post('/', effects.create$),
+				put('/:id', effects.update$),
+				del('/:id', effects.delete$),
+			]),
+		], { services: { todoStore: store } });
+		await app.start(port);
 	});
 
-	afterAll(() => subscription.unsubscribe());
-	beforeEach(() => resetStore());
+	afterAll(async () => app.stop());
+	beforeEach(() => store.reset());
 
 	const url = (path: string): string => `http://127.0.0.1:${port}${path}`;
 

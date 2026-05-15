@@ -1,13 +1,23 @@
-import { bootstrap } from './core/bootstrap';
-import { createRouter } from './core/router';
+import { createApp } from './core/app';
 import { logger } from './core/middleware';
-import { getAll$, create$, update$, delete$ } from './todos/todo.effect';
+import { del, get, group, post, put } from './core/router';
+import { createTodoEffects } from './todos/todo.effect';
+import { createTodoStore } from './todos/todo.store';
 
-const router = createRouter([
-	{ method: 'GET',    path: '/todos',     effect: getAll$ },
-	{ method: 'POST',   path: '/todos',     effect: create$ },
-	{ method: 'PUT',    path: '/todos/:id', effect: update$ },
-	{ method: 'DELETE', path: '/todos/:id', effect: delete$ },
-]);
+const todoEffects = createTodoEffects();
 
-bootstrap(3000, router, logger());
+const app = createApp([
+	group('/todos', [
+		get('/', todoEffects.getAll$),
+		post('/', todoEffects.create$),
+		put('/:id', todoEffects.update$),
+		del('/:id', todoEffects.delete$),
+	]),
+], {
+	services: {
+		todoStore: createTodoStore(),
+	},
+	middlewares: [logger()],
+});
+
+void app.start(3000);

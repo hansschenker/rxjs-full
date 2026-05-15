@@ -7,7 +7,7 @@
 [![Vitest](https://img.shields.io/badge/tested%20with-Vitest-6E9F18?logo=vitest)](https://vitest.dev)
 [![Vite](https://img.shields.io/badge/bundled%20with-Vite-646CFF?logo=vite)](https://vite.dev)
 [![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=nodedotjs)](https://nodejs.org)
-[![io-ts](https://img.shields.io/badge/validation-io--ts-orange)](https://github.com/gcanti/io-ts)
+[![Zod](https://img.shields.io/badge/validation-Zod-blue)](https://zod.dev)
 [![Security Policy](https://img.shields.io/badge/security-policy-green?logo=github)](https://github.com/hansschenker/rxjs-stack/blob/main/SECURITY.md)
 [![Built with Claude Code](https://img.shields.io/badge/built%20with-Claude%20Code-blueviolet?logo=anthropic)](https://claude.ai/code)
 
@@ -50,10 +50,10 @@ The Node.js HTTP server wrapped as an Observable source. Requests are events in 
 ### 4. Type-safe request validation
 
 ```typescript
-const validate = <T>(codec: t.Type<T>): OperatorFunction<HttpRequest, HttpRequest & { body: T }>
+const validateBody = <T>(schema: ZodType<T>): OperatorFunction<HttpRequest, HttpRequest & { body: T }>
 ```
 
-Powered by [io-ts](https://github.com/gcanti/io-ts). After `validate(MyCodec)`, `req.body` is typed as `T` — no casts needed downstream. Invalid requests throw a `ValidationError` that the router catches and maps to 422.
+Powered by [Zod](https://zod.dev). After `validateBody(MySchema)`, `req.body` is typed as `T` — no casts needed downstream. The same model now covers body, params, and query validation. Invalid requests throw a structured `ValidationError` that the router maps to 422.
 
 ### 5. Router as Effect
 
@@ -77,12 +77,16 @@ src/
 │   │   ├── types.ts      # Effect, Middleware, HttpRequest, HttpResponse
 │   │   ├── http.ts       # createServer — Node HTTP as Observable
 │   │   ├── middleware.ts  # logger() middleware
-│   │   ├── validator.ts  # validate(codec) — io-ts narrowing operator
+│   │   ├── app.ts        # createApp() — context, lifecycle hooks, health routes
+│   │   ├── errors.ts     # HttpError hierarchy + centralized mapping
+│   │   ├── response.ts   # json(), created(), noContent(), redirect(), cookies
+│   │   ├── testing.ts    # in-memory request runner + HTTP test client
+│   │   ├── validator.ts  # Zod narrowing operators for body / params / query
 │   │   ├── router.ts     # createRouter — pattern matching Effect
 │   │   └── bootstrap.ts  # wires server + middleware + router
 │   ├── todos/
 │   │   ├── todo.store.ts     # in-memory BehaviorSubject store
-│   │   ├── todo.validator.ts # io-ts codecs for todo bodies
+│   │   ├── todo.validator.ts # Zod schemas for todo bodies and params
 │   │   └── todo.effect.ts    # getAll$, create$, update$, delete$
 │   └── main.ts           # entry point
 │
@@ -134,7 +138,7 @@ fromEvent(form, 'submit').pipe(
 | Language | TypeScript (strict) |
 | Runtime | Node.js (server), browser (client) |
 | Reactive layer | RxJS 7 |
-| Validation | io-ts + fp-ts |
+| Validation | Zod |
 | Bundler | Vite |
 | Testing | Vitest + jsdom |
 | Server transport | Node `http` (no Express, no Fastify) |
@@ -162,6 +166,18 @@ npm run typecheck # TypeScript strict check
 
 ---
 
+## v0.2 framework surface
+
+The backend core now includes the first application-level framework features:
+
+- `createApp()` with injectable services, per-app context, lifecycle hooks, and built-in `/health` plus `/ready`
+- route helpers such as `get()`, `post()`, `put()`, `del()`, and nested `group()` definitions
+- route-level middleware composition
+- centralized `HttpError` classes and error-to-response mapping
+- response helpers for JSON, creation, redirects, headers, and cookies
+- Zod validation for body, params, and query streams
+- testing helpers for in-memory route execution and HTTP test clients
+
 ## Why no framework?
 
 Marble.js proved the patterns work. But as of 2025 the project is effectively unmaintained — inactive GitHub, Gitbook docs with a v3→v4 gap, and the original demo no longer runs. The five ideas above are sound; the wrapper around them is not necessary.
@@ -184,7 +200,7 @@ Claude asked only a handful of questions during the entire session — naming (`
 
 **What Claude built autonomously:**
 - All 5 server core modules (~400 lines)
-- Todos CRUD API with io-ts validation
+- Todos CRUD API with Zod validation
 - Custom TSX factory, MVU state layer, service layer, TodoItem component
 - 78 tests across 8 files (server + client)
 - README, CHANGELOG, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, issue/PR templates

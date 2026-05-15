@@ -13,6 +13,7 @@ const mockReq = (overrides: Partial<HttpRequest> = {}): HttpRequest => ({
 	body: {},
 	headers: {},
 	raw: {} as http.IncomingMessage,
+	context: { services: {}, state: {} },
 	...overrides,
 });
 
@@ -76,7 +77,7 @@ describe('createRouter()', () => {
 		const router = createRouter([
 			{
 				method: 'GET', path: '/',
-				effect: req$ => req$.pipe(mergeMap(() => throwError(() => new ValidationError([])))),
+				effect: req$ => req$.pipe(mergeMap(() => throwError(() => new ValidationError('body', [])))),
 			},
 		]);
 		const res = await firstValueFrom(router(of(mockReq())));

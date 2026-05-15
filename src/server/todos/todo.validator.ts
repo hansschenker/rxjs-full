@@ -1,7 +1,11 @@
-import * as t from 'io-ts';
+import { z } from 'zod';
 
-export const CreateTodoCodec = t.type({ title: t.string });
-export const UpdateTodoCodec = t.partial({ title: t.string, completed: t.boolean });
+export const CreateTodoSchema = z.object({ title: z.string().min(1) });
+export const UpdateTodoSchema = z.object({
+	title: z.string().min(1).optional(),
+	completed: z.boolean().optional(),
+});
+export const TodoParamsSchema = z.object({ id: z.string().min(1) });
 
-export type CreateTodoInput = t.TypeOf<typeof CreateTodoCodec>;
-export type UpdateTodoInput = t.TypeOf<typeof UpdateTodoCodec>;
+export type CreateTodoInput = z.infer<typeof CreateTodoSchema>;
+export type UpdateTodoInput = z.infer<typeof UpdateTodoSchema>;

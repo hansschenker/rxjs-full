@@ -23,8 +23,6 @@
   },
   "homepage": "https://github.com/hansschenker/rxjs-stack#readme",
   "dependencies": {
-    "fp-ts": "^2.16.11",
-    "io-ts": "^2.2.22",
     "rxjs": "^7.8.2",
     "zod": "^4.4.3"
   },

@@ -1,7 +1,7 @@
 import { firstValueFrom, of } from 'rxjs';
 import type { HttpRequest } from '../core/types';
 import { ValidationError } from '../core/validator';
-import { resetStore, setTodos, getTodos } from './todo.store';
+import { resetStore, setTodos, getTodos, todoStore } from './todo.store';
 import { getAll$, create$, update$, delete$ } from './todo.effect';
 import type * as http from 'http';
 
@@ -13,6 +13,7 @@ const mockReq = (overrides: Partial<HttpRequest> = {}): HttpRequest => ({
 	body: {},
 	headers: {},
 	raw: {} as http.IncomingMessage,
+	context: { services: { todoStore }, state: {} },
 	...overrides,
 });
 
@@ -25,9 +26,9 @@ describe('getAll$', () => {
 		expect((res.body as unknown[]).length).toBeGreaterThan(0);
 	});
 
-	it('returns no explicit status (defaults to 200)', async () => {
+	it('returns 200', async () => {
 		const res = await firstValueFrom(getAll$(of(mockReq())));
-		expect(res.status).toBeUndefined();
+		expect(res.status).toBe(200);
 	});
 
 	it('reflects store changes', async () => {
@@ -120,12 +121,10 @@ describe('update$', () => {
 		).rejects.toBeInstanceOf(ValidationError);
 	});
 
-	it('returns 404 when the todo does not exist', async () => {
-		const res = await firstValueFrom(
+	it('throws NotFound when the todo does not exist', async () => {
+		await expect(firstValueFrom(
 			update$(of(mockReq({ params: { id: 'missing' }, body: { completed: true } })))
-		);
-		expect(res.status).toBe(404);
-		expect(res.body).toEqual({ error: 'Todo not found' });
+		)).rejects.toMatchObject({ status: 404, message: 'Todo not found' });
 	});
 });
 
@@ -155,11 +154,10 @@ describe('delete$', () => {
 		expect(getTodos()[0].id).toBe('1');
 	});
 
-	it('returns 404 when deleting a non-existent id', async () => {
+	it('throws NotFound when deleting a non-existent id', async () => {
 		const before = getTodos().length;
-		const res = await firstValueFrom(delete$(of(mockReq({ params: { id: 'nonexistent' } }))));
-		expect(res.status).toBe(404);
-		expect(res.body).toEqual({ error: 'Todo not found' });
+		await expect(firstValueFrom(delete$(of(mockReq({ params: { id: 'nonexistent' } })))))
+			.rejects.toMatchObject({ status: 404, message: 'Todo not found' });
 		expect(getTodos().length).toBe(before);
 	});
 });
