@@ -171,9 +171,32 @@ npm run typecheck # TypeScript strict check
 
 ---
 
+## v0.3 framework surface
+
+### Auth middleware
+
+`requireAuth<TClaims>(verify, options?)` protects the entire app with a bring-your-own verifier. It reads `Authorization: Bearer <token>`, calls `verify`, and stores the result at `req.requestContext.state.user`. Returns 401 directly on missing or invalid tokens — no throw needed in route code. `/health` and `/ready` are excluded by default:
+
+```typescript
+createApp(routes, {
+    cors: cors(),
+    auth: requireAuth(
+        async token => {
+            const payload = await myJwtVerify(token);
+            return payload;  // stored as req.requestContext.state.user
+        },
+        { exclude: ['/login', '/health', '/ready'] },
+    ),
+});
+```
+
+`cors` stays outermost so `OPTIONS` preflight is short-circuited before auth ever runs.
+
+---
+
 ## v0.2 framework surface
 
-The backend core now includes the first application-level framework features:
+The backend core includes the first application-level framework features:
 
 - `createApp()` with injectable services, per-app context, lifecycle hooks, and built-in `/health` plus `/ready`
 - route helpers such as `get()`, `post()`, `put()`, `del()`, and nested `group()` definitions
@@ -183,7 +206,7 @@ The backend core now includes the first application-level framework features:
 - Zod validation for body, params, and query streams
 - testing helpers for in-memory route execution and HTTP test clients
 
-The client and server now also share route contracts from `src/shared/routes.ts`. Path templates live in one place, route parameter types are inferred from those templates, and the same contract owns request-body and response-body types:
+The client and server share route contracts from `src/shared/routes.ts`. Path templates live in one place, route parameter types are inferred from those templates, and the same contract owns request-body and response-body types:
 
 ```typescript
 type TodoParams = RouteParams<typeof routes.todos.update.path>; // { id: string }
@@ -193,7 +216,7 @@ type CreateResult = RouteResponse<typeof routes.todos.create>;   // Todo
 apiPath(routes.todos.update.path, { id: '42' }); // /api/todos/42
 ```
 
-The client `createClient(routes)` helper now derives a typed client tree directly from the shared contract map:
+The client `createClient(routes)` helper derives a typed client tree directly from the shared contract map:
 
 ```typescript
 const api = createClient(routes);
@@ -203,7 +226,7 @@ api.todos.create({ title: 'Ship it' });   // Observable<Todo>
 api.todos.update({ id: '42' }, { completed: true });
 ```
 
-That means a new endpoint needs one shared route declaration and one server handler; client transport wrappers are generated from the contract tree instead of handwritten.
+A new endpoint needs one shared route declaration and one server handler; client transport wrappers are generated from the contract tree instead of handwritten.
 
 ## Why no framework?
 
@@ -229,7 +252,7 @@ Claude asked only a handful of questions during the entire session — naming (`
 - All 5 server core modules (~400 lines)
 - Todos CRUD API with Zod validation
 - Custom TSX factory, MVU state layer, service layer, TodoItem component
-- 78 tests across 8 files (server + client) at v1.0.0 — now 144 tests across 17 files after v0.2
+- 78 tests across 8 files (server + client) at v1.0.0 — now 159 tests across 17 files after v0.3
 - README, CHANGELOG, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, issue/PR templates
 - GitHub Actions CI, Dependabot config, all repo settings, badges, release
 
