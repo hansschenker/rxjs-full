@@ -34,7 +34,11 @@ export const update$: Effect = req$ =>
 		validate(UpdateTodoCodec),
 		map(req => {
 			const { id } = req.params;
-			const updated = getTodos().map(t =>
+			const current = getTodos();
+			if (!current.some(t => t.id === id)) {
+				return { status: 404, body: { error: 'Todo not found' } };
+			}
+			const updated = current.map(t =>
 				t.id === id ? { ...t, ...req.body } : t,  // req.body typed as UpdateTodoInput
 			);
 			setTodos(updated);
@@ -45,7 +49,11 @@ export const update$: Effect = req$ =>
 export const delete$: Effect = req$ =>
 	req$.pipe(
 		map(req => {
-			setTodos(getTodos().filter(t => t.id !== req.params.id));
+			const current = getTodos();
+			if (!current.some(t => t.id === req.params.id)) {
+				return { status: 404, body: { error: 'Todo not found' } };
+			}
+			setTodos(current.filter(t => t.id !== req.params.id));
 			return { status: 204 };
 		}),
 	);

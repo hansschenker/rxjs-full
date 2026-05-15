@@ -25,9 +25,11 @@
   "dependencies": {
     "fp-ts": "^2.16.11",
     "io-ts": "^2.2.22",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@hono/cli": "^0.1.10",
     "@types/node": "^25.7.0",
     "@vitest/coverage-v8": "^4.1.6",
     "jsdom": "^29.1.1",

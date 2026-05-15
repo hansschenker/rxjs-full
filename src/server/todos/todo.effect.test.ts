@@ -119,6 +119,14 @@ describe('update$', () => {
 			firstValueFrom(update$(of(mockReq({ params: { id: '1' }, body: { completed: 'yes' } }))))
 		).rejects.toBeInstanceOf(ValidationError);
 	});
+
+	it('returns 404 when the todo does not exist', async () => {
+		const res = await firstValueFrom(
+			update$(of(mockReq({ params: { id: 'missing' }, body: { completed: true } })))
+		);
+		expect(res.status).toBe(404);
+		expect(res.body).toEqual({ error: 'Todo not found' });
+	});
 });
 
 describe('delete$', () => {
@@ -147,9 +155,11 @@ describe('delete$', () => {
 		expect(getTodos()[0].id).toBe('1');
 	});
 
-	it('is idempotent — deleting a non-existent id leaves store unchanged', async () => {
+	it('returns 404 when deleting a non-existent id', async () => {
 		const before = getTodos().length;
-		await firstValueFrom(delete$(of(mockReq({ params: { id: 'nonexistent' } }))));
+		const res = await firstValueFrom(delete$(of(mockReq({ params: { id: 'nonexistent' } }))));
+		expect(res.status).toBe(404);
+		expect(res.body).toEqual({ error: 'Todo not found' });
 		expect(getTodos().length).toBe(before);
 	});
 });
