@@ -19,6 +19,8 @@ All notable changes to rxjs-stack are documented here.
 - Testing helpers: `runEffect()`, `runRequest()`, `createHttpTestClient()`, `createTestContext()`, `createTestRequest()`
 - Shared route contracts (`src/shared/routes.ts`) — `RouteContract`, `RouteParams`, `RouteBody`, `RouteQuery`, `RouteResponse`, `buildPath`, `apiPath`
 - `createClient(routes)` — derives a typed Observable client tree directly from the shared route contract map
+- `errors.test.ts` — 17 tests covering `HttpError` hierarchy and `errorResponse()`
+- Test suite grows from 78 (v1.0.0) to 144 tests across 17 files
 
 ### Fixed
 - `defineRoute` now correctly propagates query-parameter presence at runtime, enabling `createClient` to build query strings from the contract
