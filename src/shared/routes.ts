@@ -43,17 +43,18 @@ const defineRoute = <
 >(
 	method: TMethod,
 	path: TPath,
+	hasQuery?: boolean,
 ): RouteContract<TMethod, TPath, TBody, TQuery, TResponse> => ({
 	method,
 	path,
 	body: undefined as TBody,
-	query: undefined as TQuery,
+	query: (hasQuery === true ? {} : undefined) as TQuery,
 	response: undefined as TResponse,
 });
 
 export const routes = {
 	todos: {
-		list: defineRoute<'GET', '/todos', undefined, { completed?: 'true' | 'false' }, Todo[]>('GET', '/todos'),
+		list: defineRoute<'GET', '/todos', undefined, { completed?: 'true' | 'false' }, Todo[]>('GET', '/todos', true),
 		create: defineRoute<'POST', '/todos', CreateTodoBody, undefined, Todo>('POST', '/todos'),
 		update: defineRoute<'PUT', '/todos/:id', UpdateTodoBody, undefined, Todo>('PUT', '/todos/:id'),
 		remove: defineRoute<'DELETE', '/todos/:id', undefined, undefined, void>('DELETE', '/todos/:id'),
