@@ -4,7 +4,7 @@
 import * as http from 'http';
 import { Observable } from 'rxjs';
 import { z } from 'zod';
-import type { HttpRequest, HttpResponse } from './types';
+import type { HttpRequest, HttpResponse, SseEvent } from './types';
 
 interface RequestEvent {
 	request: HttpRequest;
@@ -71,12 +71,43 @@ const parseQuery = (raw: string): Record<string, string> => {
 	return params;
 };
 
+export const formatSseChunk = (event: SseEvent): string => {
+	let chunk = '';
+	if (event.id !== undefined) chunk += `id: ${event.id}\n`;
+	if (event.event !== undefined) chunk += `event: ${event.event}\n`;
+	chunk += `data: ${JSON.stringify(event.data)}\n\n`;
+	return chunk;
+};
+
+export const applySse = (
+	stream: Observable<SseEvent>,
+	nodeReq: { on: (event: 'close', handler: () => void) => void },
+	nodeRes: { write: (chunk: string) => void; end: () => void },
+): void => {
+	const subscription = stream.subscribe({
+		next: event => nodeRes.write(formatSseChunk(event)),
+		error: () => nodeRes.end(),
+		complete: () => nodeRes.end(),
+	});
+	nodeReq.on('close', () => subscription.unsubscribe());
+};
+
 export const createServer = (port: number): Observable<RequestEvent> =>
 	new Observable(observer => {
 		const server = http.createServer(async (req, res) => {
 			const [pathname, search = ''] = (req.url ?? '/').split('?');
 
-			const respond = ({ status = 200, body: resBody, headers = {} }: HttpResponse): void => {
+			const respond = ({ status = 200, body: resBody, headers = {}, stream }: HttpResponse): void => {
+				if (stream) {
+					res.writeHead(200, {
+						'Content-Type': 'text/event-stream',
+						'Cache-Control': 'no-cache',
+						'Connection': 'keep-alive',
+						...headers,
+					});
+					applySse(stream, req, res);
+					return;
+				}
 				res.writeHead(status, { 'Content-Type': 'application/json', ...headers });
 				res.end(resBody !== undefined ? JSON.stringify(resBody) : '');
 			};
