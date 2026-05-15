@@ -87,26 +87,30 @@ describe('errorResponse(HttpError)', () => {
 });
 
 describe('errorResponse(unknown)', () => {
+	let spy: ReturnType<typeof vi.spyOn>;
+
+	beforeEach(() => {
+		spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+	});
+
+	afterEach(() => {
+		spy.mockRestore();
+	});
+
 	it('returns 500 for a non-HttpError', () => {
-		const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 		const res = errorResponse(new Error('boom'));
 		expect(res.status).toBe(500);
 		expect(res.body).toEqual({ error: 'Internal server error' });
-		spy.mockRestore();
 	});
 
 	it('calls console.error with the original error', () => {
-		const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 		const err = new Error('boom');
 		errorResponse(err);
 		expect(spy).toHaveBeenCalledWith(err);
-		spy.mockRestore();
 	});
 
 	it('returns 500 for non-Error values', () => {
-		const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 		const res = errorResponse('plain string error');
 		expect(res.status).toBe(500);
-		spy.mockRestore();
 	});
 });
