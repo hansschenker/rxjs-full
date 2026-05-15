@@ -229,7 +229,7 @@ Claude asked only a handful of questions during the entire session — naming (`
 - All 5 server core modules (~400 lines)
 - Todos CRUD API with Zod validation
 - Custom TSX factory, MVU state layer, service layer, TodoItem component
-- 78 tests across 8 files (server + client) at v1.0.0 — now 138 tests across 17 files after v0.2
+- 78 tests across 8 files (server + client) at v1.0.0 — now 144 tests across 17 files after v0.2
 - README, CHANGELOG, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, issue/PR templates
 - GitHub Actions CI, Dependabot config, all repo settings, badges, release
 
