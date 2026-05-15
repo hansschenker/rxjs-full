@@ -2,9 +2,9 @@ import { catchError, mergeMap, of } from 'rxjs';
 import type { AppContext, Effect, HttpRequest, Middleware } from './types';
 import { errorResponse, NotFound } from './errors';
 
-export interface Route {
+export interface Route<TPath extends string = string> {
 	method: string;
-	path: string;
+	path: TPath;
 	effect: Effect;
 	middlewares?: Middleware[];
 }
@@ -36,20 +36,25 @@ const matchRoute = (pattern: string, url: string): Record<string, string> | null
 	return params;
 };
 
-export const route = (method: string, path: string, effect: Effect, ...middlewares: Middleware[]): Route => ({
+export const route = <TPath extends string>(
+	method: string,
+	path: TPath,
+	effect: Effect,
+	...middlewares: Middleware[]
+): Route<TPath> => ({
 	method,
 	path,
 	effect,
 	middlewares,
 });
 
-export const get = (path: string, effect: Effect, ...middlewares: Middleware[]): Route =>
+export const get = <TPath extends string>(path: TPath, effect: Effect, ...middlewares: Middleware[]): Route<TPath> =>
 	route('GET', path, effect, ...middlewares);
-export const post = (path: string, effect: Effect, ...middlewares: Middleware[]): Route =>
+export const post = <TPath extends string>(path: TPath, effect: Effect, ...middlewares: Middleware[]): Route<TPath> =>
 	route('POST', path, effect, ...middlewares);
-export const put = (path: string, effect: Effect, ...middlewares: Middleware[]): Route =>
+export const put = <TPath extends string>(path: TPath, effect: Effect, ...middlewares: Middleware[]): Route<TPath> =>
 	route('PUT', path, effect, ...middlewares);
-export const del = (path: string, effect: Effect, ...middlewares: Middleware[]): Route =>
+export const del = <TPath extends string>(path: TPath, effect: Effect, ...middlewares: Middleware[]): Route<TPath> =>
 	route('DELETE', path, effect, ...middlewares);
 
 export const group = (prefix: string, routes: RouteDefinition[], ...middlewares: Middleware[]): RouteGroup => ({

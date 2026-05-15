@@ -178,6 +178,28 @@ The backend core now includes the first application-level framework features:
 - Zod validation for body, params, and query streams
 - testing helpers for in-memory route execution and HTTP test clients
 
+The client and server now also share route contracts from `src/shared/routes.ts`. Path templates live in one place, route parameter types are inferred from those templates, and the same contract owns request-body and response-body types:
+
+```typescript
+type TodoParams = RouteParams<typeof routes.todos.update.path>; // { id: string }
+type CreateBody = RouteBody<typeof routes.todos.create>;         // CreateTodoBody
+type CreateResult = RouteResponse<typeof routes.todos.create>;   // Todo
+
+apiPath(routes.todos.update.path, { id: '42' }); // /api/todos/42
+```
+
+The client `createClient(routes)` helper now derives a typed client tree directly from the shared contract map:
+
+```typescript
+const api = createClient(routes);
+
+api.todos.list();                         // Observable<Todo[]>
+api.todos.create({ title: 'Ship it' });   // Observable<Todo>
+api.todos.update({ id: '42' }, { completed: true });
+```
+
+That means a new endpoint needs one shared route declaration and one server handler; client transport wrappers are generated from the contract tree instead of handwritten.
+
 ## Why no framework?
 
 Marble.js proved the patterns work. But as of 2025 the project is effectively unmaintained — inactive GitHub, Gitbook docs with a v3→v4 gap, and the original demo no longer runs. The five ideas above are sound; the wrapper around them is not necessary.

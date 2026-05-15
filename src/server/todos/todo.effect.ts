@@ -5,6 +5,7 @@ import type { Effect } from '../core/types';
 import { validateBody, validateParams } from '../core/validator';
 import { CreateTodoSchema, TodoParamsSchema, UpdateTodoSchema } from './todo.validator';
 import type { TodoStore } from './todo.store';
+import { routes, type RouteResponse } from '../../shared/routes';
 import type { Todo } from '../../shared/types';
 
 export interface TodoServices {
@@ -29,7 +30,7 @@ export const createTodoEffects = () => ({
 				};
 				const store = getTodoStore(req);
 				store.setTodos([...store.getTodos(), todo]);
-				return created(todo);
+				return created(todo satisfies RouteResponse<typeof routes.todos.create>);
 			}),
 		)) as Effect,
 
@@ -45,7 +46,9 @@ export const createTodoEffects = () => ({
 					todo.id === req.params.id ? { ...todo, ...req.body } : todo,
 				);
 				store.setTodos(updated);
-				return json(updated.find(todo => todo.id === req.params.id));
+				const todo = updated.find(item => item.id === req.params.id);
+				if (!todo) throw new NotFound('Todo not found');
+				return json(todo satisfies RouteResponse<typeof routes.todos.update>);
 			}),
 		)) as Effect,
 

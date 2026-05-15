@@ -1,28 +1,11 @@
-import { Observable, from } from 'rxjs';
-import { fromFetch } from 'rxjs/fetch';
-import { switchMap, map } from 'rxjs/operators';
-import type { Todo, CreateTodoBody, UpdateTodoBody } from '../shared/types';
+import { createClient } from './api';
+import { routes } from '../shared/routes';
 
-const BASE = '/api/todos';
+export const api = createClient(routes);
 
-const json$ = <T>(res: Response): Observable<T> => from(res.json() as Promise<T>);
-
-export const getAll$ = (): Observable<Todo[]> =>
-	fromFetch(BASE).pipe(switchMap(res => json$<Todo[]>(res)));
-
-export const create$ = (body: CreateTodoBody): Observable<Todo> =>
-	fromFetch(BASE, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(body),
-	}).pipe(switchMap(res => json$<Todo>(res)));
-
-export const update$ = (id: string, body: UpdateTodoBody): Observable<Todo> =>
-	fromFetch(`${BASE}/${id}`, {
-		method: 'PUT',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(body),
-	}).pipe(switchMap(res => json$<Todo>(res)));
-
-export const remove$ = (id: string): Observable<void> =>
-	fromFetch(`${BASE}/${id}`, { method: 'DELETE' }).pipe(map(() => undefined));
+export const getAll$ = api.todos.list;
+export const create$ = api.todos.create;
+export const update$ = (id: string, body: Parameters<typeof api.todos.update>[1]) =>
+	api.todos.update({ id }, body);
+export const remove$ = (id: string) =>
+	api.todos.remove({ id });

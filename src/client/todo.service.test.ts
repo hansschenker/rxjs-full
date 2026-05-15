@@ -22,7 +22,9 @@ describe('getAll$()', () => {
 	it('calls fromFetch with the base URL and returns parsed todos', async () => {
 		mockFromFetch.mockReturnValue(of(fakeRes([todo])));
 		const result = await firstValueFrom(getAll$());
-		expect(mockFromFetch).toHaveBeenCalledWith('/api/todos');
+		expect(mockFromFetch).toHaveBeenCalledWith('/api/todos', expect.objectContaining({
+			method: 'GET',
+		}));
 		expect(result).toEqual([todo]);
 	});
 });
