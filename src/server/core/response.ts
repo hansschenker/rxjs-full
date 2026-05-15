@@ -1,4 +1,6 @@
-import type { HttpResponse } from './types';
+import { map } from 'rxjs/operators';
+import type { Observable } from 'rxjs';
+import type { HttpResponse, SseEvent } from './types';
 
 export const json = (body: unknown, status = 200, headers: Record<string, string> = {}): HttpResponse => ({
 	status,
@@ -35,3 +37,15 @@ export const withCookie = (
 	);
 	return withHeader(response, 'Set-Cookie', [`${name}=${value}`, ...attributes].join('; '));
 };
+
+export const stream$ = <T>(source$: Observable<T>, eventType?: string): HttpResponse => ({
+	status: 200,
+	headers: {
+		'Content-Type': 'text/event-stream',
+		'Cache-Control': 'no-cache',
+		'Connection': 'keep-alive',
+	},
+	stream: source$.pipe(
+		map((data): SseEvent => ({ event: eventType, data })),
+	),
+});
