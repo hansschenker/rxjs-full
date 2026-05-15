@@ -255,27 +255,24 @@ describe('CLAUDE.md — requireAuth() via createApp', () => {
 		get('/profile', req$ => req$.pipe(map(() => json({ id: '42' })))),
 	];
 
-	it('valid token — claims are stored in requestContext.state.user', async () => {
-		const claims = { id: '99', role: 'admin' };
-		let captured: unknown;
-		const captureRoutes = [
+	it('valid token — claims accessible at req.requestContext.state.user', async () => {
+		const app = createApp([
 			get('/profile', req$ => req$.pipe(
 				map(req => {
-					captured = req.requestContext.state.user;
-					return json({ id: '42' });
+					const user = req.requestContext.state.user as { id: string };
+					return json({ id: user.id });
 				}),
 			)),
-		];
-		const app = createApp(captureRoutes, {
-			auth: requireAuth(async () => claims),
+		], {
+			auth: requireAuth(async () => ({ id: '99' })),
 		});
-		await firstValueFrom(
+		const res = await firstValueFrom(
 			app.router(of(createTestRequest({
 				url: '/profile',
 				headers: { authorization: 'Bearer my-token' },
 			}))),
 		);
-		expect(captured).toEqual(claims);
+		expect((res.body as { id: string }).id).toBe('99');
 	});
 
 	it('missing token returns 401', async () => {

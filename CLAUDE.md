@@ -78,7 +78,7 @@ createApp(routes, {
 			const payload = await myJwtVerify(token);
 			return payload;                    // stored as req.requestContext.state.user
 		},
-		{ exclude: ['/login'] },
+		{ exclude: ['/login', '/health', '/ready'] },  // replaces defaults — include /health and /ready to keep them
 	),
 });
 ```
