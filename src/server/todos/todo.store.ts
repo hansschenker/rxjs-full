@@ -1,10 +1,12 @@
 import { BehaviorSubject } from 'rxjs';
+import type { Observable } from 'rxjs';
 import type { Todo } from '../../shared/types';
 
 export interface TodoStore {
 	getTodos: () => Todo[];
 	setTodos: (todos: Todo[]) => void;
 	reset: () => void;
+	todos$: Observable<Todo[]>;
 }
 
 const createSeed = (): Todo[] => [
@@ -19,6 +21,7 @@ export const createTodoStore = (): TodoStore => {
 		getTodos: () => [...store$.getValue()],
 		setTodos: todos => store$.next(todos),
 		reset: () => store$.next([...seed]),
+		todos$: store$.asObservable(),
 	};
 };
 
