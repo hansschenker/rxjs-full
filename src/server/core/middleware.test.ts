@@ -2,7 +2,7 @@ import { firstValueFrom, of } from 'rxjs';
 import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { vi } from 'vitest';
-import { cors, logger, requestId } from './middleware';
+import { cors, logger, requestId, requireAuth } from './middleware';
 import type { Effect, HttpRequest, HttpResponse } from './types';
 import type * as http from 'http';
 
@@ -116,5 +116,90 @@ describe('cors()', () => {
 		const wrapped = cors({ maxAge: 3600 })(makeEffect({ status: 200 }));
 		const res = await firstValueFrom(wrapped(of(mockReq({ method: 'OPTIONS', headers: {} }))));
 		expect(res.headers?.['Access-Control-Max-Age']).toBe('3600');
+	});
+});
+
+describe('requireAuth()', () => {
+	const makeEffect = (response: HttpResponse): Effect =>
+		req$ => req$.pipe(map(() => response));
+
+	const okEffect = makeEffect({ status: 200, body: 'ok' });
+
+	it('passes the request through when the token is valid', async () => {
+		const verify = vi.fn().mockResolvedValue({ id: '42' });
+		const wrapped = requireAuth(verify)(okEffect);
+		const res = await firstValueFrom(
+			wrapped(of(mockReq({ headers: { authorization: 'Bearer valid-token' } }))),
+		);
+		expect(res.status).toBe(200);
+		expect(verify).toHaveBeenCalledWith('valid-token');
+	});
+
+	it('stores claims in requestContext.state.user', async () => {
+		const claims = { id: '42', role: 'admin' };
+		let captured: unknown;
+		const captureEffect: Effect = req$ =>
+			req$.pipe(map(req => {
+				captured = req.requestContext.state.user;
+				return { status: 200 };
+			}));
+		const wrapped = requireAuth(vi.fn().mockResolvedValue(claims))(captureEffect);
+		await firstValueFrom(
+			wrapped(of(mockReq({ headers: { authorization: 'Bearer t' } }))),
+		);
+		expect(captured).toEqual(claims);
+	});
+
+	it('returns 401 when Authorization header is missing', async () => {
+		const wrapped = requireAuth(vi.fn())(okEffect);
+		const res = await firstValueFrom(wrapped(of(mockReq({ headers: {} }))));
+		expect(res.status).toBe(401);
+	});
+
+	it('returns 401 when Authorization header is not Bearer format', async () => {
+		const wrapped = requireAuth(vi.fn())(okEffect);
+		const res = await firstValueFrom(
+			wrapped(of(mockReq({ headers: { authorization: 'Basic dXNlcjpwYXNz' } }))),
+		);
+		expect(res.status).toBe(401);
+	});
+
+	it('returns 401 (not 500) when verify throws', async () => {
+		const verify = vi.fn().mockRejectedValue(new Error('invalid signature'));
+		const wrapped = requireAuth(verify)(okEffect);
+		const res = await firstValueFrom(
+			wrapped(of(mockReq({ headers: { authorization: 'Bearer bad-token' } }))),
+		);
+		expect(res.status).toBe(401);
+	});
+
+	it('bypasses auth for paths in the explicit exclude list', async () => {
+		const verify = vi.fn();
+		const wrapped = requireAuth(verify, { exclude: ['/login'] })(okEffect);
+		const res = await firstValueFrom(
+			wrapped(of(mockReq({ url: '/login', headers: {} }))),
+		);
+		expect(res.status).toBe(200);
+		expect(verify).not.toHaveBeenCalled();
+	});
+
+	it('bypasses auth for /health by default', async () => {
+		const verify = vi.fn();
+		const wrapped = requireAuth(verify)(okEffect);
+		const res = await firstValueFrom(
+			wrapped(of(mockReq({ url: '/health', headers: {} }))),
+		);
+		expect(res.status).toBe(200);
+		expect(verify).not.toHaveBeenCalled();
+	});
+
+	it('bypasses auth for /ready by default', async () => {
+		const verify = vi.fn();
+		const wrapped = requireAuth(verify)(okEffect);
+		const res = await firstValueFrom(
+			wrapped(of(mockReq({ url: '/ready', headers: {} }))),
+		);
+		expect(res.status).toBe(200);
+		expect(verify).not.toHaveBeenCalled();
 	});
 });
