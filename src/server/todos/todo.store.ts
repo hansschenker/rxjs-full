@@ -19,7 +19,7 @@ export const createTodoStore = (): TodoStore => {
 
 	return {
 		getTodos: () => [...store$.getValue()],
-		setTodos: todos => store$.next(todos),
+		setTodos: (todos: Todo[]) => store$.next([...todos]),
 		reset: () => store$.next([...seed]),
 		todos$: store$.asObservable(),
 	};

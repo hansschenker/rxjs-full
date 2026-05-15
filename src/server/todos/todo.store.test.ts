@@ -13,8 +13,8 @@ describe('TodoStore.todos$', () => {
 	it('emits the current store contents on subscribe', async () => {
 		const store = createTodoStore();
 		const todos = await firstValueFrom(store.todos$);
-		expect(Array.isArray(todos)).toBe(true);
-		expect(todos.length).toBeGreaterThan(0);
+		expect(todos).toHaveLength(1);
+		expect(todos[0].title).toBe('Learn rxjs-stack');
 	});
 
 	it('emits the new value when setTodos is called', async () => {
