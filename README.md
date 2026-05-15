@@ -38,7 +38,7 @@ Middleware is just an RxJS operator. Compose it with `pipe()`, exactly like any 
 ```typescript
 const app = createApp(routes, {
     middlewares: [requestId(), logger()],
-    cors: cors({ origins: ['*'] }),
+    cors: cors(),
 });
 ```
 
