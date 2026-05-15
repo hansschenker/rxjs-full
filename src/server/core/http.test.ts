@@ -78,5 +78,6 @@ describe('applySse()', () => {
 		source.next({ data: 'after disconnect' });
 
 		expect(mockRes.write).not.toHaveBeenCalled();
+		expect(mockRes.end).not.toHaveBeenCalled();
 	});
 });
