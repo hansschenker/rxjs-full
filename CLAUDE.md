@@ -39,9 +39,9 @@ A route handler, middleware, and the router itself are all `Effect`. Middleware 
 |---|---|
 | `src/server/core/http.ts` | Node.js `http.Server` wrapped as an `Observable<RequestEvent>` |
 | `src/server/core/bootstrap.ts` | Wires server + global middleware + router |
-| `src/server/core/middleware.ts` | `logger()`, `requestId()`, `cors()` — `Middleware` operators and Effect wrappers |
+| `src/server/core/middleware.ts` | `logger()`, `requestId()`, `cors()`, `requireAuth()` — `Middleware` operators and Effect wrappers |
 | `src/server/core/router.ts` | Pattern-matching `createRouter`; `get/post/put/del/group/handle` helpers |
-| `src/server/core/app.ts` | `createApp()` — injectable services, lifecycle hooks, `/health` + `/ready`, `cors?` option |
+| `src/server/core/app.ts` | `createApp()` — injectable services, lifecycle hooks, `/health` + `/ready`, `cors?` and `auth?` options |
 | `src/server/core/validator.ts` | `validateBody / validateParams / validateQuery` — Zod narrowing operators |
 | `src/server/core/errors.ts` | `HttpError` hierarchy; `errorResponse()` maps any thrown error to a response |
 | `src/server/core/response.ts` | `json / created / noContent / redirect` helpers |

@@ -79,7 +79,7 @@ export const requireAuth = <TClaims>(
 		req$ =>
 			req$.pipe(
 				mergeMap(req => {
-					if (exclude.includes(req.url)) {
+					if (exclude.includes(req.url.split('?')[0])) {
 						return effect(of(req));
 					}
 
