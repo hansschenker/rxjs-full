@@ -1,7 +1,7 @@
 import { firstValueFrom, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { createApp } from './app';
-import { cors } from './middleware';
+import { cors, requireAuth } from './middleware';
 import { createRouter, get, group } from './router';
 import { json } from './response';
 import { createTestRequest } from './testing';
@@ -82,5 +82,59 @@ describe('createApp() — cors option', () => {
 		const res = await firstValueFrom(app.router(of(createTestRequest({ url: '/test' }))));
 		expect(res.status).toBe(200);
 		expect(res.headers?.['Access-Control-Allow-Origin']).toBeUndefined();
+	});
+});
+
+describe('createApp() — auth option', () => {
+	const testRoutes = [
+		get('/secret', req$ => req$.pipe(map(() => json('classified')))),
+	];
+
+	it('returns 401 when no token is provided', async () => {
+		const app = createApp(testRoutes, {
+			auth: requireAuth(() => Promise.resolve({ id: '1' })),
+		});
+		const res = await firstValueFrom(
+			app.router(of(createTestRequest({ url: '/secret', headers: {} }))),
+		);
+		expect(res.status).toBe(401);
+	});
+
+	it('returns 200 when a valid token is provided', async () => {
+		const app = createApp(testRoutes, {
+			auth: requireAuth(() => Promise.resolve({ id: '1' })),
+		});
+		const res = await firstValueFrom(
+			app.router(of(createTestRequest({
+				url: '/secret',
+				headers: { authorization: 'Bearer valid' },
+			}))),
+		);
+		expect(res.status).toBe(200);
+	});
+
+	it('cors + auth — OPTIONS preflight bypasses auth', async () => {
+		const app = createApp(testRoutes, {
+			cors: cors(),
+			auth: requireAuth(() => Promise.resolve({ id: '1' })),
+		});
+		const res = await firstValueFrom(
+			app.router(of(createTestRequest({
+				method: 'OPTIONS',
+				url: '/secret',
+				headers: {},
+			}))),
+		);
+		expect(res.status).toBe(204);
+	});
+
+	it('/health bypasses auth by default', async () => {
+		const app = createApp(testRoutes, {
+			auth: requireAuth(() => Promise.resolve({ id: '1' })),
+		});
+		const res = await firstValueFrom(
+			app.router(of(createTestRequest({ url: '/health', headers: {} }))),
+		);
+		expect(res.status).toBe(200);
 	});
 });

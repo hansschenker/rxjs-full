@@ -9,6 +9,7 @@ export interface AppOptions<TServices extends Record<string, unknown>> {
 	services?: TServices;
 	middlewares?: Middleware[];
 	cors?: (effect: Effect) => Effect;
+	auth?: (effect: Effect) => Effect;
 	onStart?: Array<(context: AppContext<TServices>) => void | Promise<void>>;
 	onStop?: Array<(context: AppContext<TServices>) => void | Promise<void>>;
 	includeHealthRoutes?: boolean;
@@ -38,7 +39,8 @@ export const createApp = <TServices extends Record<string, unknown> = Record<str
 			...routes,
 		];
 	const baseRouter = createRouter(allRoutes, context);
-	const router = options.cors ? options.cors(baseRouter) : baseRouter;
+	const authRouter = options.auth ? options.auth(baseRouter) : baseRouter;
+	const router     = options.cors ? options.cors(authRouter) : authRouter;
 	let subscription: Subscription | null = null;
 
 	return {
