@@ -39,8 +39,9 @@ A route handler, middleware, and the router itself are all `Effect`. Middleware 
 |---|---|
 | `src/server/core/http.ts` | Node.js `http.Server` wrapped as an `Observable<RequestEvent>` |
 | `src/server/core/bootstrap.ts` | Wires server + global middleware + router |
+| `src/server/core/middleware.ts` | `logger()`, `requestId()`, `cors()` — `Middleware` operators and Effect wrappers |
 | `src/server/core/router.ts` | Pattern-matching `createRouter`; `get/post/put/del/group/handle` helpers |
-| `src/server/core/app.ts` | `createApp()` — injectable services, lifecycle hooks, `/health` + `/ready` |
+| `src/server/core/app.ts` | `createApp()` — injectable services, lifecycle hooks, `/health` + `/ready`, `cors?` option |
 | `src/server/core/validator.ts` | `validateBody / validateParams / validateQuery` — Zod narrowing operators |
 | `src/server/core/errors.ts` | `HttpError` hierarchy; `errorResponse()` maps any thrown error to a response |
 | `src/server/core/response.ts` | `json / created / noContent / redirect` helpers |
@@ -48,6 +49,23 @@ A route handler, middleware, and the router itself are all `Effect`. Middleware 
 | `src/server/todos/` | Concrete CRUD: store (BehaviorSubject), validator (Zod schemas), effects |
 
 Effects retrieve their `TodoStore` from `req.context.services`, so the store is injectable and unit-testable without HTTP.
+
+`cors()` returns an Effect wrapper `(effect: Effect) => Effect`. Pass it via `AppOptions.cors` — it intercepts `OPTIONS` preflight (returns 204 immediately) and injects CORS headers on all other responses:
+
+```typescript
+createApp(routes, {
+	middlewares: [requestId(), logger()],
+	cors: cors({ origins: ['http://localhost:5173'], credentials: true }),
+});
+```
+
+`createApp` returns an `App` object with a `router: Effect` field — the fully-wired router (cors-wrapped if configured). Use it directly in tests without starting an HTTP server:
+
+```typescript
+const app = createApp(routes, { cors: cors() });
+const res = await firstValueFrom(app.router(of(createTestRequest({ method: 'OPTIONS', url: '/todos' }))));
+expect(res.status).toBe(204);
+```
 
 ### Shared route contracts (`src/shared/routes.ts`)
 
@@ -71,7 +89,7 @@ Adding a new endpoint: add one entry to `routes` in `src/shared/routes.ts`, add 
 |---|---|
 | `src/client/h.ts` | Custom JSX factory (`h`) — no React |
 | `src/client/todo.state.ts` | MVU state: `Subject` → `scan(reducer)` → `shareReplay(1)` |
-| `src/client/todo.service.ts` | `fromFetch` wrappers (raw, typed by route) |
+| `src/client/todo.service.ts` | Typed client wrappers via `createClient` |
 | `src/client/api.ts` | `createClient(routes)` — generates typed Observable methods from the contract tree |
 | `src/client/main.tsx` | Entry: wires DOM events to `dispatch`, subscribes `state$` to re-render |
 
@@ -87,12 +105,13 @@ export const dispatch = (action: Action): void => action$.next(action);
 
 ```typescript
 const api = createClient(routes);
-api.todos.list();                              // Observable<Todo[]>
+api.todos.list({});                            // Observable<Todo[]>  (query-only route — pass {} or { completed: 'true' })
 api.todos.create({ title: 'Ship it' });        // Observable<Todo>
 api.todos.update({ id: '42' }, { completed: true });
+api.todos.remove({ id: '42' });                // Observable<void>
 ```
 
-`createClient` walks the contract tree: leaf nodes that match the `AnyRoute` shape are converted to functions; branches become nested objects. Argument order: `(params?, query?, body?)` — slots are omitted when not present in the contract.
+`createClient` walks the contract tree: leaf nodes that match the `AnyRoute` shape are converted to functions; branches become nested objects. Argument order: `(params, body)` or `(query)` — only the slots present in the contract appear, in the order params → query/body.
 
 ### JSX configuration
 
