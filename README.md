@@ -171,6 +171,60 @@ npm run typecheck # TypeScript strict check
 
 ---
 
+## v0.4 framework surface
+
+### Server-Sent Events
+
+A route handler returns `stream$(source$, eventType)` instead of `json(data)`. The server keeps the connection open and pushes typed SSE events as the source Observable emits. The client-side `fromEventSource<T>` helper wraps the browser `EventSource` API as an Observable, closing the reactive loop end-to-end.
+
+#### Server
+
+```typescript
+// Route effect — return stream$() instead of json()
+todoStream$: req$ => req$.pipe(
+    map(req => {
+        const store = req.context.services.todoStore as TodoStore;
+        return stream$(store.todos$, 'todos');
+    }),
+)
+```
+
+`stream$(source$, 'todos')` returns an `HttpResponse` with `stream` set. When `respond()` detects it, it writes SSE headers and subscribes to the Observable, serialising each emission as:
+
+```
+event: todos
+data: [...]
+
+```
+
+Client disconnect (via `req.on('close', ...)`) unsubscribes the source Observable automatically.
+
+#### `TodoStore.todos$`
+
+`todos$: Observable<Todo[]>` is now part of the `TodoStore` interface — the internal `BehaviorSubject` exposed as a read-only Observable. New subscribers receive the current list immediately; every `setTodos` call pushes an update.
+
+```typescript
+export interface TodoStore {
+    getTodos: () => Todo[];
+    setTodos: (todos: Todo[]) => void;
+    reset: () => void;
+    todos$: Observable<Todo[]>;   // new
+}
+```
+
+#### Client
+
+```typescript
+import { fromEventSource } from './sse';
+
+fromEventSource<Todo[]>('/api/todos/stream', 'todos')
+    .subscribe(todos => render(todos));
+```
+
+`fromEventSource` is a cold Observable — it creates an `EventSource` on subscribe and calls `es.close()` on unsubscribe. Parse errors and connection errors route to `observer.error`.
+
+---
+
 ## v0.3 framework surface
 
 ### Auth middleware
@@ -252,7 +306,7 @@ Claude asked only a handful of questions during the entire session — naming (`
 - All 5 server core modules (~400 lines)
 - Todos CRUD API with Zod validation
 - Custom TSX factory, MVU state layer, service layer, TodoItem component
-- 78 tests across 8 files (server + client) at v1.0.0 — now 159 tests across 17 files after v0.3
+- 78 tests across 8 files (server + client) at v1.0.0 — now 180 tests across 19 files after v0.4
 - README, CHANGELOG, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, issue/PR templates
 - GitHub Actions CI, Dependabot config, all repo settings, badges, release
 

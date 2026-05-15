@@ -8,6 +8,24 @@ All notable changes to rxjs-stack are documented here.
 
 ---
 
+## [0.4.0] — 2026-05-15
+
+### Added
+
+**Server-Sent Events (v0.4)**
+- `SseEvent` interface — `{ event?: string; data: unknown; id?: string }` — typed SSE event shape
+- `stream?` field on `HttpResponse` — presence signals SSE mode; `body` is ignored when set
+- `stream$(source$, eventType?)` response helper — wraps any `Observable<T>` as an SSE response with correct headers
+- `formatSseChunk(event: SseEvent): string` — serialises to SSE wire format (`id:`/`event:`/`data:` fields, double-newline terminator)
+- `applySse(stream, nodeReq, nodeRes): void` — subscribes to the stream, writes chunks, tears down on client disconnect via `req.on('close', ...)`
+- SSE branch in `respond()` — detects `stream` and enters SSE mode; writes `text/event-stream` headers and delegates to `applySse`
+- `TodoStore.todos$: Observable<Todo[]>` — internal `BehaviorSubject` exposed as a public Observable; emits on every `setTodos` call
+- `GET /todos/stream` demo endpoint — pushes the live todo list as SSE events named `'todos'`
+- `fromEventSource<T>(url, eventType): Observable<T>` — cold Observable wrapping the browser `EventSource` API; teardown calls `es.close()`; `onerror` closes the connection and errors the Observable; `JSON.parse` failures route to `observer.error`
+- Test suite grows from 159 (v0.3) to 180 tests across 19 files
+
+---
+
 ## [0.3.0] — 2026-05-15
 
 ### Added
