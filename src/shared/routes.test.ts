@@ -1,5 +1,5 @@
 import { expectTypeOf } from 'vitest';
-import { apiPath, buildPath, routes, type RouteBody, type RouteParams, type RouteResponse } from './routes';
+import { apiPath, buildPath, routes, type RouteBody, type RouteParams, type RouteQuery, type RouteResponse } from './routes';
 import type { CreateTodoBody, Todo } from './types';
 
 describe('shared routes', () => {
@@ -15,7 +15,12 @@ describe('shared routes', () => {
 
 	it('derives request and response payload types from route contracts', () => {
 		expectTypeOf<RouteBody<typeof routes.todos.create>>().toEqualTypeOf<CreateTodoBody>();
+		expectTypeOf<RouteQuery<typeof routes.todos.list>>().toEqualTypeOf<{ completed?: 'true' | 'false' }>();
 		expectTypeOf<RouteResponse<typeof routes.todos.create>>().toEqualTypeOf<Todo>();
 		expectTypeOf<RouteResponse<typeof routes.todos.list>>().toEqualTypeOf<Todo[]>();
+	});
+
+	it('builds paths with query strings', () => {
+		expect(apiPath(routes.todos.list.path, {}, { completed: 'true' })).toBe('/api/todos?completed=true');
 	});
 });

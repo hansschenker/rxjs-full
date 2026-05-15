@@ -1,6 +1,7 @@
 import { catchError, mergeMap, of } from 'rxjs';
 import type { AppContext, Effect, HttpRequest, Middleware } from './types';
 import { errorResponse, NotFound } from './errors';
+import type { AnyRoute, RouteBody, RouteParams, RouteQuery } from '../../shared/routes';
 
 export interface Route<TPath extends string = string> {
 	method: string;
@@ -16,6 +17,13 @@ export interface RouteGroup {
 }
 
 export type RouteDefinition = Route | RouteGroup;
+export type ContractEffect<TRoute extends AnyRoute> = Effect<
+	HttpRequest<
+		RouteBody<TRoute>,
+		RouteParams<TRoute['path']>,
+		RouteQuery<TRoute> extends undefined ? Record<string, string | undefined> : Extract<RouteQuery<TRoute>, Record<string, string | undefined>>
+	>
+>;
 
 const joinPath = (prefix: string, path: string): string =>
 	`${prefix.replace(/\/$/, '')}/${path.replace(/^\//, '')}`.replace(/^$/, '/');
@@ -56,6 +64,13 @@ export const put = <TPath extends string>(path: TPath, effect: Effect, ...middle
 	route('PUT', path, effect, ...middlewares);
 export const del = <TPath extends string>(path: TPath, effect: Effect, ...middlewares: Middleware[]): Route<TPath> =>
 	route('DELETE', path, effect, ...middlewares);
+
+export const handle = <TRoute extends AnyRoute>(
+	contract: TRoute,
+	effect: ContractEffect<TRoute>,
+	...middlewares: Middleware[]
+): Route<TRoute['path']> =>
+	route(contract.method, contract.path, effect as Effect, ...middlewares);
 
 export const group = (prefix: string, routes: RouteDefinition[], ...middlewares: Middleware[]): RouteGroup => ({
 	prefix,

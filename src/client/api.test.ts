@@ -31,7 +31,7 @@ describe('createClient()', () => {
 
 	it('preserves method signatures from contracts', () => {
 		const client = createClient(routes);
-		expectTypeOf(client.todos.list).toEqualTypeOf<() => import('rxjs').Observable<Todo[]>>();
+		expectTypeOf(client.todos.list).toEqualTypeOf<(query: { completed?: 'true' | 'false' }) => import('rxjs').Observable<Todo[]>>();
 		expectTypeOf(client.todos.create).toEqualTypeOf<(body: CreateTodoBody) => import('rxjs').Observable<Todo>>();
 		expectTypeOf(client.todos.update).toEqualTypeOf<(params: { id: string }, body: UpdateTodoBody) => import('rxjs').Observable<Todo>>();
 		expectTypeOf(client.todos.remove).toEqualTypeOf<(params: { id: string }) => import('rxjs').Observable<void>>();

@@ -92,6 +92,7 @@ export const createServer = (port: number): Observable<RequestEvent> =>
 					headers: req.headers as Record<string, string>,
 					raw:     req,
 					context: { services: {}, state: {} },
+					requestContext: { state: {} },
 				};
 
 				observer.next({ request, respond });

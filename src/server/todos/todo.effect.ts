@@ -2,8 +2,8 @@ import { map } from 'rxjs/operators';
 import { NotFound } from '../core/errors';
 import { created, json, noContent } from '../core/response';
 import type { Effect } from '../core/types';
-import { validateBody, validateParams } from '../core/validator';
-import { CreateTodoSchema, TodoParamsSchema, UpdateTodoSchema } from './todo.validator';
+import { validateBody, validateParams, validateQuery } from '../core/validator';
+import { CreateTodoSchema, TodoListQuerySchema, TodoParamsSchema, UpdateTodoSchema } from './todo.validator';
 import type { TodoStore } from './todo.store';
 import { routes, type RouteResponse } from '../../shared/routes';
 import type { Todo } from '../../shared/types';
@@ -15,7 +15,14 @@ export interface TodoServices {
 export const createTodoEffects = () => ({
 	getAll$: ((req$) =>
 		req$.pipe(
-			map(req => json(getTodoStore(req).getTodos())),
+			validateQuery(TodoListQuerySchema),
+			map(req => {
+				const todos = getTodoStore(req).getTodos();
+				const filtered = req.query.completed === undefined
+					? todos
+					: todos.filter(todo => String(todo.completed) === req.query.completed);
+				return json(filtered);
+			}),
 		)) as Effect,
 
 	create$: ((req$) =>

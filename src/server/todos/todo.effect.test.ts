@@ -14,6 +14,7 @@ const mockReq = (overrides: Partial<HttpRequest> = {}): HttpRequest => ({
 	headers: {},
 	raw: {} as http.IncomingMessage,
 	context: { services: { todoStore }, state: {} },
+	requestContext: { state: {} },
 	...overrides,
 });
 

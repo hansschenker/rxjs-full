@@ -21,6 +21,7 @@ export const createTestRequest = (
 	headers: {},
 	raw: {} as http.IncomingMessage,
 	context: createTestContext(),
+	requestContext: { state: {} },
 	...overrides,
 });
 

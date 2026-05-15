@@ -7,3 +7,8 @@ import type { Middleware } from './types';
 
 export const logger = (): Middleware =>
 	tap(req => console.log(`${req.method} ${req.url}`));
+
+export const requestId = (): Middleware =>
+	tap(req => {
+		req.requestContext.requestId = crypto.randomUUID();
+	});

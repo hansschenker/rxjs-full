@@ -1,6 +1,6 @@
 import { createApp } from './core/app';
-import { logger } from './core/middleware';
-import { del, get, group, post, put } from './core/router';
+import { logger, requestId } from './core/middleware';
+import { group, handle } from './core/router';
 import { createTodoEffects } from './todos/todo.effect';
 import { createTodoStore } from './todos/todo.store';
 import { routes } from '../shared/routes';
@@ -9,16 +9,16 @@ const todoEffects = createTodoEffects();
 
 const app = createApp([
 	group('', [
-		get(routes.todos.list.path, todoEffects.getAll$),
-		post(routes.todos.create.path, todoEffects.create$),
-		put(routes.todos.update.path, todoEffects.update$),
-		del(routes.todos.remove.path, todoEffects.delete$),
+		handle(routes.todos.list, todoEffects.getAll$),
+		handle(routes.todos.create, todoEffects.create$),
+		handle(routes.todos.update, todoEffects.update$),
+		handle(routes.todos.remove, todoEffects.delete$),
 	]),
 ], {
 	services: {
 		todoStore: createTodoStore(),
 	},
-	middlewares: [logger()],
+	middlewares: [requestId(), logger()],
 });
 
 void app.start(3000);

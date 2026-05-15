@@ -8,6 +8,9 @@ export const UpdateTodoSchema = z.object({
 	completed: z.boolean().optional(),
 });
 export const TodoParamsSchema = z.object({ id: z.string().min(1) });
+export const TodoListQuerySchema = z.object({
+	completed: z.enum(['true', 'false']).optional(),
+});
 
 export type CreateTodoInput = z.infer<typeof CreateTodoSchema>;
 export type UpdateTodoInput = z.infer<typeof UpdateTodoSchema>;

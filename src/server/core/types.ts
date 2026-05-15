@@ -6,10 +6,15 @@ export interface AppContext<TServices extends object = Record<string, unknown>> 
 	state: Record<string, unknown>;
 }
 
+export interface RequestContext {
+	requestId?: string;
+	state: Record<string, unknown>;
+}
+
 export interface HttpRequest<
 	TBody = unknown,
 	TParams extends Record<string, string> = Record<string, string>,
-	TQuery extends Record<string, string> = Record<string, string>,
+	TQuery extends Record<string, string | undefined> = Record<string, string | undefined>,
 > {
 	method: string;
 	url: string;
@@ -19,6 +24,7 @@ export interface HttpRequest<
 	headers: Record<string, string>;
 	raw: http.IncomingMessage;
 	context: AppContext;
+	requestContext: RequestContext;
 }
 
 export interface HttpResponse {

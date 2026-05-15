@@ -6,20 +6,31 @@ import {
 	type AnyRoute,
 	type RouteBody,
 	type RouteParams,
+	type RouteQuery,
 	type RouteResponse,
 } from '../shared/routes';
 
 type HasParams<TRoute extends AnyRoute> =
 	keyof RouteParams<TRoute['path']> extends never ? false : true;
+type HasQuery<TRoute extends AnyRoute> =
+	RouteQuery<TRoute> extends undefined ? false : true;
 
 export type ClientMethod<TRoute extends AnyRoute> =
 	RouteBody<TRoute> extends undefined
 		? HasParams<TRoute> extends true
-			? (params: RouteParams<TRoute['path']>) => Observable<RouteResponse<TRoute>>
-			: () => Observable<RouteResponse<TRoute>>
+			? HasQuery<TRoute> extends true
+				? (params: RouteParams<TRoute['path']>, query: RouteQuery<TRoute>) => Observable<RouteResponse<TRoute>>
+				: (params: RouteParams<TRoute['path']>) => Observable<RouteResponse<TRoute>>
+			: HasQuery<TRoute> extends true
+				? (query: RouteQuery<TRoute>) => Observable<RouteResponse<TRoute>>
+				: () => Observable<RouteResponse<TRoute>>
 		: HasParams<TRoute> extends true
-			? (params: RouteParams<TRoute['path']>, body: RouteBody<TRoute>) => Observable<RouteResponse<TRoute>>
-			: (body: RouteBody<TRoute>) => Observable<RouteResponse<TRoute>>;
+			? HasQuery<TRoute> extends true
+				? (params: RouteParams<TRoute['path']>, query: RouteQuery<TRoute>, body: RouteBody<TRoute>) => Observable<RouteResponse<TRoute>>
+				: (params: RouteParams<TRoute['path']>, body: RouteBody<TRoute>) => Observable<RouteResponse<TRoute>>
+			: HasQuery<TRoute> extends true
+				? (query: RouteQuery<TRoute>, body: RouteBody<TRoute>) => Observable<RouteResponse<TRoute>>
+				: (body: RouteBody<TRoute>) => Observable<RouteResponse<TRoute>>;
 
 export type ClientFor<TContract> =
 	TContract extends AnyRoute
@@ -29,13 +40,15 @@ export type ClientFor<TContract> =
 export const request$ = <TRoute extends AnyRoute>(
 	route: TRoute,
 	params: RouteParams<TRoute['path']>,
+	query: RouteQuery<TRoute>,
 	...bodyArg: RouteBody<TRoute> extends undefined ? [] : [RouteBody<TRoute>]
 ): Observable<RouteResponse<TRoute>> =>
-	requestCore$(route, params as Record<string, string>, bodyArg[0]) as Observable<RouteResponse<TRoute>>;
+	requestCore$(route, params as Record<string, string>, query as Record<string, string | undefined> | undefined, bodyArg[0]) as Observable<RouteResponse<TRoute>>;
 
 const requestCore$ = (
 	route: AnyRoute,
 	params: Record<string, string>,
+	query?: Record<string, string | undefined>,
 	body?: unknown,
 ): Observable<unknown> => {
 	const init: RequestInit = route.method === 'GET' || route.method === 'DELETE'
@@ -46,7 +59,7 @@ const requestCore$ = (
 			body: JSON.stringify(body),
 		};
 
-	return fromFetch(apiPath(route.path, params), init).pipe(
+	return fromFetch(apiPath(route.path, params, query), init).pipe(
 		switchMap(res =>
 			route.method === 'DELETE'
 				? from(Promise.resolve(undefined))
@@ -60,9 +73,11 @@ export const createClient = <TContract>(contract: TContract): ClientFor<TContrac
 		if (isRoute(node)) {
 			return (...args: unknown[]) => {
 				const hasParams = /:[A-Za-z0-9_]+/.test(node.path);
+				const hasQuery = node.query !== undefined;
 				const params = hasParams ? args[0] as Record<string, string> : {};
-				const body = hasParams ? args[1] : args[0];
-				return requestCore$(node, params, body);
+				const query = hasQuery ? args[hasParams ? 1 : 0] as Record<string, string | undefined> : undefined;
+				const body = args[hasParams ? (hasQuery ? 2 : 1) : (hasQuery ? 1 : 0)];
+				return requestCore$(node, params, query, body);
 			};
 		}
 

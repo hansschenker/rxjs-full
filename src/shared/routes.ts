@@ -13,44 +13,50 @@ export interface RouteContract<
 	TMethod extends HttpMethod,
 	TPath extends string,
 	TBody = undefined,
+	TQuery = undefined,
 	TResponse = unknown,
 > {
 	method: TMethod;
 	path: TPath;
 	body: TBody;
+	query: TQuery;
 	response: TResponse;
 }
 
-export type AnyRoute = RouteContract<HttpMethod, string, unknown, unknown>;
-export type RouteBody<TRoute extends RouteContract<HttpMethod, string, unknown, unknown>> = TRoute['body'];
-export type RouteResponse<TRoute extends RouteContract<HttpMethod, string, unknown, unknown>> = TRoute['response'];
-export type RoutePath<TRoute extends RouteContract<HttpMethod, string, unknown, unknown>> = TRoute['path'];
-export type RouteRequest<TRoute extends RouteContract<HttpMethod, string, unknown, unknown>> = {
+export type AnyRoute = RouteContract<HttpMethod, string, unknown, unknown, unknown>;
+export type RouteBody<TRoute extends AnyRoute> = TRoute['body'];
+export type RouteQuery<TRoute extends AnyRoute> = TRoute['query'];
+export type RouteResponse<TRoute extends AnyRoute> = TRoute['response'];
+export type RoutePath<TRoute extends AnyRoute> = TRoute['path'];
+export type RouteRequest<TRoute extends AnyRoute> = {
 	params: RouteParams<RoutePath<TRoute>>;
 	body: RouteBody<TRoute>;
+	query: RouteQuery<TRoute>;
 };
 
 const defineRoute = <
 	TMethod extends HttpMethod,
 	TPath extends string,
 	TBody = undefined,
+	TQuery = undefined,
 	TResponse = unknown,
 >(
 	method: TMethod,
 	path: TPath,
-): RouteContract<TMethod, TPath, TBody, TResponse> => ({
+): RouteContract<TMethod, TPath, TBody, TQuery, TResponse> => ({
 	method,
 	path,
 	body: undefined as TBody,
+	query: undefined as TQuery,
 	response: undefined as TResponse,
 });
 
 export const routes = {
 	todos: {
-		list: defineRoute<'GET', '/todos', undefined, Todo[]>('GET', '/todos'),
-		create: defineRoute<'POST', '/todos', CreateTodoBody, Todo>('POST', '/todos'),
-		update: defineRoute<'PUT', '/todos/:id', UpdateTodoBody, Todo>('PUT', '/todos/:id'),
-		remove: defineRoute<'DELETE', '/todos/:id', undefined, void>('DELETE', '/todos/:id'),
+		list: defineRoute<'GET', '/todos', undefined, { completed?: 'true' | 'false' }, Todo[]>('GET', '/todos'),
+		create: defineRoute<'POST', '/todos', CreateTodoBody, undefined, Todo>('POST', '/todos'),
+		update: defineRoute<'PUT', '/todos/:id', UpdateTodoBody, undefined, Todo>('PUT', '/todos/:id'),
+		remove: defineRoute<'DELETE', '/todos/:id', undefined, undefined, void>('DELETE', '/todos/:id'),
 	},
 } as const;
 
@@ -67,4 +73,9 @@ export const buildPath = <TPath extends string>(
 export const apiPath = <TPath extends string>(
 	path: TPath,
 	params: RouteParams<TPath>,
-): string => `/api${buildPath(path, params)}`;
+	query?: Record<string, string | undefined>,
+): string => {
+	const concrete = `/api${buildPath(path, params)}`;
+	const entries = Object.entries(query ?? {}).filter(([, value]) => value !== undefined);
+	return entries.length === 0 ? concrete : `${concrete}?${new URLSearchParams(entries as Array<[string, string]>).toString()}`;
+};

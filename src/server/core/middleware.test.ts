@@ -1,6 +1,6 @@
 import { firstValueFrom, of } from 'rxjs';
 import { vi } from 'vitest';
-import { logger } from './middleware';
+import { logger, requestId } from './middleware';
 import type { HttpRequest } from './types';
 import type * as http from 'http';
 
@@ -13,6 +13,7 @@ const mockReq = (overrides: Partial<HttpRequest> = {}): HttpRequest => ({
 	headers: {},
 	raw: {} as http.IncomingMessage,
 	context: { services: {}, state: {} },
+	requestContext: { state: {} },
 	...overrides,
 });
 
@@ -42,5 +43,10 @@ describe('logger()', () => {
 		expect(spy).toHaveBeenCalledWith('GET /a');
 		expect(spy).toHaveBeenCalledWith('DELETE /b');
 		spy.mockRestore();
+	});
+
+	it('adds a request id to request-scoped context', async () => {
+		const req = await firstValueFrom(of(mockReq()).pipe(requestId()));
+		expect(req.requestContext.requestId).toEqual(expect.any(String));
 	});
 });
